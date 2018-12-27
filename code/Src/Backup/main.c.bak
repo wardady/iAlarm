@@ -47,7 +47,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lcd5110.h"
-#include "rtc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,15 +67,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t aTxBuffer[14];
-const char *days[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
-const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -85,6 +80,15 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 LCD5110_display lcd1;
 
+uint8_t fromDEC(uint8_t dec)
+{
+    return (dec / 10) << 4 | dec % 10;
+}
+
+uint8_t toDEC(uint8_t binar)
+{
+    return ((binar >> 4) * 10) + (binar & 0xF);
+}
 /* USER CODE END 0 */
 
 /**
@@ -94,7 +98,7 @@ LCD5110_display lcd1;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t sec, min, hour, day, date, month, year;
+	uint8_t sec = 0, min = 0, hour = 0, day = 0, date = 0, month = 0, year = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -118,38 +122,37 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-	lcd1.hw_conf.spi_handle = &hspi2;
-	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
-	lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
-	lcd1.hw_conf.rst_pin =  LCD1_RST_Pin;
-	lcd1.hw_conf.rst_port = LCD1_RST_GPIO_Port;
-	lcd1.hw_conf.dc_pin =  LCD1_DC_Pin;
-	lcd1.hw_conf.dc_port = LCD1_DC_GPIO_Port;
-	lcd1.def_scr = lcd5110_def_scr;
-	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
+  lcd1.hw_conf.spi_handle = &hspi2;
+  lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
+  lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
+  lcd1.hw_conf.rst_pin =  LCD1_RST_Pin;
+  lcd1.hw_conf.rst_port = LCD1_RST_GPIO_Port;
+  lcd1.hw_conf.dc_pin =  LCD1_DC_Pin;
+  lcd1.hw_conf.dc_port = LCD1_DC_GPIO_Port;
+  lcd1.def_scr = lcd5110_def_scr;
+  LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-	set_time(0, 26, 15, 4, 27, 12, 18);
+  aTxBuffer[0]=0x00;
+  aTxBuffer[1]=fromDEC(30); //секунды(0-59)
+  aTxBuffer[2]=0x30;//минуты(0-59)
+  aTxBuffer[3]=0x30;//часы(1-12+AM/PM или 00-23)
+  aTxBuffer[4]=0x01; //день недели(1-7)
+  aTxBuffer[5]=0x17; //дата(01-31)
+  aTxBuffer[6]=0x10;//месяц(01-12)
+  aTxBuffer[7]=0x18; //год(00-99)
 
+  //передадим в функцию I2C-адрес DS3231(0xD0) и адрес первого регистра DS3231(0x00)
+  I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 1, lcd1);
+  //подождем готовность микросхемы
+  while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {}
+  //передадим в DS3231 подряд 7 байт из буфера
+  I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 7, lcd1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  	get_time();
-
-		sec = toDEC(aTxBuffer[0]);
-		min = toDEC(aTxBuffer[1]);
-		hour = toDEC(aTxBuffer[2]);
-		day = toDEC(aTxBuffer[3]);
-		date = toDEC(aTxBuffer[4]);
-		month = toDEC(aTxBuffer[5]);
-		year = toDEC(aTxBuffer[7]);
-
-		LCD5110_clear(&lcd1);
-		LCD5110_printf(&lcd1, BLACK, "%d:%d:%d\n%s\n%d %s %d\n", hour, min, sec, days[day-1], date, mon[month-1], year);
-		HAL_Delay(100);
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -229,7 +232,6 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
