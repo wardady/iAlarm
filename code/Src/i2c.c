@@ -41,7 +41,7 @@
 #include "i2c.h"
 
 /* USER CODE BEGIN 0 */
-extern uint8_t aTxBuffer[14];
+extern uint8_t aTxBuffer[18];
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE END 0 */

@@ -76,9 +76,24 @@ const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
 /* USER CODE BEGIN PFP */
-
+volatile int button_is_pressed = 0;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+ if( GPIO_Pin == GPIO_PIN_0) {
+  static uint32_t last_change_tick;
+  if( HAL_GetTick() - last_change_tick < 50 ) {
+   return;
+  }
+  last_change_tick = HAL_GetTick();
+  if(button_is_pressed) {
+   button_is_pressed = 0;
+   set_time(0, 52, 12, 5, 28, 12, 18);
+  } else {
+   button_is_pressed = 1;
+  }
+ }
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -128,8 +143,6 @@ int main(void)
 	lcd1.def_scr = lcd5110_def_scr;
 	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-//	set_time(0, 47, 11, 5, 28, 12, 18);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -144,10 +157,10 @@ int main(void)
 		day = toDEC(aTxBuffer[3]);
 		date = toDEC(aTxBuffer[4]);
 		month = toDEC(aTxBuffer[5]);
-//		year = toDEC(aTxBuffer[6]);
+		year = toDEC(aTxBuffer[7]);
 
 		LCD5110_clear(&lcd1);
-		LCD5110_printf(&lcd1, BLACK, "%02d:%02d:%02d\n%s\n%d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], 18);
+		LCD5110_printf(&lcd1, BLACK, "%02d:%02d:%02d\n%s\n%d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
 		HAL_Delay(100);
 
     /* USER CODE END WHILE */
