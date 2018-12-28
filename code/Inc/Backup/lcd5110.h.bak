@@ -119,5 +119,6 @@ inline void LCD5110_print(const char* str, int color, LCD5110_display* lcd_conf)
 int LCD5110_printf( LCD5110_display* lcd_conf, int color, char *fmt, ...);
 
 void LCD5110_clear_print(char* str, int color, LCD5110_display* display);
+void LCD5110_clear(LCD5110_display* display);
 
 #endif

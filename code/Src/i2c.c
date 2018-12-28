@@ -39,11 +39,14 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
+
 /* USER CODE BEGIN 0 */
 extern uint8_t aTxBuffer[14];
 I2C_HandleTypeDef hi2c1;
 
- /* USER CODE END 0 */
+/* USER CODE END 0 */
+
+I2C_HandleTypeDef hi2c1;
 
 /* I2C1 init function */
 void MX_I2C1_Init(void)

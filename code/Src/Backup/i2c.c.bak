@@ -39,12 +39,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
-#include "lcd5110.h"
 /* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
+extern uint8_t aTxBuffer[14];
 I2C_HandleTypeDef hi2c1;
+
+ /* USER CODE END 0 */
 
 /* I2C1 init function */
 void MX_I2C1_Init(void)
@@ -79,9 +78,9 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**I2C1 GPIO Configuration    
     PB6     ------> I2C1_SCL
-    PB9     ------> I2C1_SDA 
+    PB7     ------> I2C1_SDA 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_9;
+    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -115,9 +114,9 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
   
     /**I2C1 GPIO Configuration    
     PB6     ------> I2C1_SCL
-    PB9     ------> I2C1_SDA 
+    PB7     ------> I2C1_SDA 
     */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6|GPIO_PIN_9);
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6|GPIO_PIN_7);
 
     /* I2C1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(I2C1_EV_IRQn);
@@ -129,20 +128,20 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 } 
 
 /* USER CODE BEGIN 1 */
-void I2C_WriteBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff, LCD5110_display lcd)
+void I2C_WriteBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff)
 {
 	while (HAL_I2C_Master_Transmit(&hi, (uint16_t) DEV_ADDR, (uint8_t*) &aTxBuffer, (uint16_t) sizebuff, (uint32_t) 1000) != HAL_OK) {
 		if (HAL_I2C_GetError(&hi) != HAL_I2C_ERROR_AF) {
-			LCD5110_clear_print("Writing error\n", BLACK, &lcd);
+			while (1) {}
 		}
 	}
 }
 
-void I2C_ReadBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff, LCD5110_display lcd)
+void I2C_ReadBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff)
 {
 	while (HAL_I2C_Master_Receive(&hi, (uint16_t) DEV_ADDR, (uint8_t*) &aTxBuffer, (uint16_t) sizebuff, (uint32_t) 1000) != HAL_OK) {
 		if (HAL_I2C_GetError(&hi) != HAL_I2C_ERROR_AF) {
-			LCD5110_clear_print("Reading error\n", BLACK, &lcd);
+			while (1) {}
 		}
 	}
 }
