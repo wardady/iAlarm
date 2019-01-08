@@ -94,11 +94,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 
+			reset_alarm1();
+			reset_alarm2();
+
 			alarm1_timer(30, 0, 0, 0);
-//			alarm1_every_second();
 			al1 = 1;
 			alarm2_timer(1, 0, 0);
-//			alarm2_every_minute();
 			al2 = 1;
 		} else {
 			button_is_pressed = 1;
@@ -155,7 +156,10 @@ int main(void)
 	lcd1.def_scr = lcd5110_def_scr;
 	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-//	set_time(30, 20, 19, 1, 7, 1, 19);
+	reset_alarm1();
+	reset_alarm2();
+
+	//set_time(30, 51, 11, 2, 8, 1, 19);
 
   /* USER CODE END 2 */
 
@@ -173,15 +177,17 @@ int main(void)
 	month = toDEC(aTxBuffer[5]);
 	year = toDEC(aTxBuffer[6]);
 
-	if ((aTxBuffer[15] <<  7) >> 7) {
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+	if (aTxBuffer[15] & 0b1) {
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+		reset_flag1();
 		al1 = 0;
 	}
 
-	if ((aTxBuffer[15] << 6) >> 7) {
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+	if (aTxBuffer[15] & 0b10) {
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+		reset_flag2();
 		al2 = 0;
 	}
 
