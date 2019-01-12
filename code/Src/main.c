@@ -97,9 +97,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			reset_alarm1();
 			reset_alarm2();
 
-			alarm1_timer(30, 0, 0, 0);
+			set_timer(30, 0, 0, 0);
 			al1 = 1;
-			alarm2_timer(1, 0, 0);
+			set_alarm(32, 14, 12);
 			al2 = 1;
 		} else {
 			button_is_pressed = 1;
