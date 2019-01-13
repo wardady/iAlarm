@@ -71,7 +71,7 @@
 uint8_t aTxBuffer[18];
 const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-uint8_t al1 = 0, al2 = 0;
+uint8_t tim = 0, al = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,18 +89,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		if(button_is_pressed) {
 			button_is_pressed = 0;
 
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+			reset_alarms();
 
-			reset_alarm1();
-			reset_alarm2();
-
-			set_timer(30, 0, 0, 0);
-			al1 = 1;
-			set_alarm(32, 14, 12);
-			al2 = 1;
+			set_timer(30, 1);
+			tim = 1;
+			set_alarm(15, 12, 13);
+			al = 1;
 		} else {
 			button_is_pressed = 1;
 		}
@@ -111,7 +105,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-LCD5110_display lcd1;
+LCD5110_display lcd1, lcd2;
 
 /* USER CODE END 0 */
 
@@ -122,7 +116,7 @@ LCD5110_display lcd1;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t sec, min, hour, day, date, month, year;
+	uint8_t sec, min, hour, day, date, month, year, tim_sec, tim_min;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -145,6 +139,7 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_SPI2_Init();
+  MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
 	lcd1.hw_conf.spi_handle = &hspi2;
 	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
@@ -156,10 +151,13 @@ int main(void)
 	lcd1.def_scr = lcd5110_def_scr;
 	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-	reset_alarm1();
-	reset_alarm2();
+	reset_alarms();
 
-	//set_time(30, 51, 11, 2, 8, 1, 19);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, 0);
+
+
+//	set_time(30, 54, 18, 7, 13, 1, 19);
 
   /* USER CODE END 2 */
 
@@ -177,18 +175,21 @@ int main(void)
 	month = toDEC(aTxBuffer[5]);
 	year = toDEC(aTxBuffer[6]);
 
-	if (aTxBuffer[15] & 0b1) {
+	tim_sec = toDEC(aTxBuffer[7]);
+	tim_min = toDEC(aTxBuffer[8]);
+
+	if (tim && (aTxBuffer[15] & 0b1)) {
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		reset_flag1();
-		al1 = 0;
+		tim = 0;
 	}
 
-	if (aTxBuffer[15] & 0b10) {
+	if (al && (aTxBuffer[15] & 0b10)) {
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		reset_flag2();
-		al2 = 0;
+		al = 0;
 	}
 
 	LCD5110_clear(&lcd1);
@@ -196,21 +197,34 @@ int main(void)
 	LCD5110_printf(&lcd1, BLACK, "%s\n", days[day-1 % 7]);
 	LCD5110_printf(&lcd1, BLACK, " % 2d %s 20%02d\n", date, mon[month-1 % 12], year);
 
-	if (al1 & al2) {
-		LCD5110_print("ALARM1", WHITE, &lcd1);
-		LCD5110_print(" ", BLACK, &lcd1);
-		LCD5110_print("ALARM2\n", WHITE, &lcd1);
-	} else if (al1) {
-		LCD5110_print("ALARM1", WHITE, &lcd1);
-		LCD5110_print(" ALARM2\n", BLACK, &lcd1);
-	} else if (al2) {
-		LCD5110_print("ALARM1 ", BLACK, &lcd1);
-		LCD5110_print("ALARM2\n", WHITE, &lcd1);
+	if (tim) {
+		uint8_t sec_left, min_left;
+
+		sec_left = tim_sec - sec;
+		min_left = tim_min - min;
+
+		if (sec_left < 0) {
+			sec_left += 60;
+			min_left--;
+		}
+		if (min_left < 0) {
+			min_left += 60;
+		}
+
+		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
 	} else {
-		LCD5110_print("ALARM1 ALARM2\n", BLACK, &lcd1);
+		LCD5110_print("TIMER   ", BLACK, &lcd1);
+	}
+	if (al) {
+		LCD5110_print("ALARM\n", WHITE, &lcd1);
+	} else {
+		LCD5110_print("ALARM\n", BLACK, &lcd1);
 	}
 
-	HAL_Delay(100);
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
+
+	HAL_Delay(1000);
 
     /* USER CODE END WHILE */
 

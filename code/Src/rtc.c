@@ -61,14 +61,14 @@ void set_alarm(uint8_t min, uint8_t hour, uint8_t date)
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 15);
 }
 
-void set_timer(uint8_t sec, uint8_t min, uint8_t hour, uint8_t date)
+void set_timer(uint8_t sec, uint8_t min)
 {
 	get_buffer();
 
 	aTxBuffer[8] = toDEC(aTxBuffer[0]) + sec;
 	aTxBuffer[9] = toDEC(aTxBuffer[1]) + (aTxBuffer[8] / 60) + min;
-	aTxBuffer[10] = toDEC(aTxBuffer[2]) + (aTxBuffer[9] / 60) + hour;
-	aTxBuffer[11] = toDEC(aTxBuffer[4]) + (aTxBuffer[10] / 24) + date;
+	aTxBuffer[10] = toDEC(aTxBuffer[2]) + (aTxBuffer[9] / 60);
+	aTxBuffer[11] = toDEC(aTxBuffer[4]) + (aTxBuffer[10] / 24);
 
 	aTxBuffer[8] = fromDEC(aTxBuffer[8] % 60) & 0b01111111;
 	aTxBuffer[9] = fromDEC(aTxBuffer[9] % 60) & 0b01111111;
@@ -154,7 +154,7 @@ void reset_flag2()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
-void reset_alarm1()
+void reset_alarms()
 {
 	get_buffer();
 
@@ -164,6 +164,9 @@ void reset_alarm1()
 	aTxBuffer[9] = 0;
 	aTxBuffer[10] = 0;
 	aTxBuffer[11] = 0;
+	aTxBuffer[12] = 0;
+	aTxBuffer[13] = 0;
+	aTxBuffer[14] = 0;
 
 	for (uint8_t i = 7; i > 0; --i) {
 		aTxBuffer[i] = aTxBuffer[i-1];
@@ -175,22 +178,3 @@ void reset_alarm1()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
-void reset_alarm2()
-{
-	get_buffer();
-
-	aTxBuffer[16] &= 0b11111100;
-
-	aTxBuffer[12] = 0;
-	aTxBuffer[13] = 0;
-	aTxBuffer[14] = 0;
-
-	for (uint8_t i = 11; i > 0; --i) {
-		aTxBuffer[i] = aTxBuffer[i-1];
-	}
-	aTxBuffer[0] = 0;
-
-	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 1);
-	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {}
-	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
-}

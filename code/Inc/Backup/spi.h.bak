@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2018 STMicroelectronics
+  * COPYRIGHT(c) 2019 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -51,12 +51,14 @@
 /* USER CODE END Includes */
 
 extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi4;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 void MX_SPI2_Init(void);
+void MX_SPI4_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
