@@ -85,12 +85,12 @@ void Error_Handler(void);
 #define LCD1_DC_GPIO_Port GPIOB
 #define LCD1_CS_Pin GPIO_PIN_14
 #define LCD1_CS_GPIO_Port GPIOB
+#define LCD2_CS_Pin GPIO_PIN_14
+#define LCD2_CS_GPIO_Port GPIOA
 #define LCD2_RST_Pin GPIO_PIN_15
 #define LCD2_RST_GPIO_Port GPIOA
 #define LCD2_DC_Pin GPIO_PIN_11
 #define LCD2_DC_GPIO_Port GPIOC
-#define LCD2_CS_Pin GPIO_PIN_0
-#define LCD2_CS_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

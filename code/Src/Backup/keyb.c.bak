@@ -52,40 +52,43 @@ void keyboard_init(keyboard* board) {
 void keyboard_on_input(keyboard* board) {
 	uint32_t current_tick = HAL_GetTick();
 
-	if (current_tick - board->last_tick > 175) {
-		int col_pin = -1;
-		int row_pin = -1;
+		if (current_tick - board->last_tick > 175) {
+			int col_pin = -1;
+			int row_pin = -1;
 
-		// get col_pin
-		// loop through all input pins and find which of them is pressed
-		for (int input_pin = 0; input_pin < 4; ++input_pin) {
-			if (HAL_GPIO_ReadPin(board->input_pins_port, board->input_pins[input_pin])) {
-				col_pin = input_pin;
-				break;
-			}
-		}
-
-		// outputs off
-		keyboard_pins_write(board, 0);
-
-		if (col_pin != -1) {
-			// get row_pin
-			// Turn on the outputs one by one and get when the input works
-			for (int output_pin = 0; output_pin < 4; ++output_pin) {
-				HAL_GPIO_WritePin(board->output_pins_port, board->output_pins[output_pin], 1);
-				if (HAL_GPIO_ReadPin(board->input_pins_port, board->input_pins[col_pin])) {
-					row_pin = output_pin;
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			// get col_pin
+			// loop through all input pins and find which of them is pressed
+			for (int input_pin = 0; input_pin < 4; ++input_pin) {
+				if (HAL_GPIO_ReadPin(board->input_pins_port, board->input_pins[input_pin])) {
+					HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13,1);
+					col_pin = input_pin;
 					break;
 				}
 			}
-		}
 
-		// Call on_press if some button was pressed
-		if (row_pin != -1 && col_pin != -1) {
-			keyboard_on_press(board, col_pin, row_pin);
-		}
+			// outputs off
+			keyboard_pins_write(board, 0);
 
-		board->last_tick = current_tick;
-		keyboard_pins_write(board, 1);
+			if (col_pin != -1) {
+				// get row_pin
+				// Turn on the outputs one by one and get when the input works
+				for (int output_pin = 0; output_pin < 4; ++output_pin) {
+					HAL_GPIO_WritePin(board->output_pins_port, board->output_pins[output_pin], 1);
+					if (HAL_GPIO_ReadPin(board->input_pins_port, board->input_pins[col_pin])) {
+						HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13,1);
+						row_pin = output_pin;
+						break;
+					}
+				}
+			}
+
+			// Call on_press if some button was pressed
+			if (row_pin != -1 && col_pin != -1) {
+				keyboard_on_press(board, col_pin, row_pin);
+			}
+
+			board->last_tick = current_tick;
+			keyboard_pins_write(board, 1);
 	}
 }

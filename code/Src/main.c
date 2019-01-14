@@ -82,7 +82,6 @@ LCD5110_display lcd1, lcd2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-volatile int button_is_pressed = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	keyboard_on_input(&board);
@@ -97,15 +96,19 @@ static void on_number(int x) {
 		} else if (input == 2) {
 			cd = x % 10;
 		}
+	} else if (menu == 2) {
+		ch = 0;
 	}
 }
 
 static void on_choice(button x) {
 	if (menu == 0) {
 		if (x == button_a) {
-			menu = 1;
-			input = 0;
+			menu = 1; input = 0;
 			ch = 0; cm = 0; cd = 0;
+		} else if (x == button_b) {
+			menu = 2; input = 0;
+			cm = 0; cs = 0;
 		}
 	} else if (menu == 1) {
 		if (x == button_a) {
@@ -125,6 +128,22 @@ static void on_choice(button x) {
 				input = 0;
 			} else if (input == 2) {
 				input = 1;
+			}
+		}
+	} else if (menu == 2) {
+		if (x == button_a) {
+			if (input == 0) {
+				input = 1;
+			} else if (input == 1) {
+				input = 0; tim = 1; menu = 0;
+				set_timer(cs, cm);
+				cs = 0; cm = 0;
+			}
+		} else if (x == button_b) {
+			if (input == 0) {
+				input = 1;
+			} else if (input == 1) {
+				input = 0;
 			}
 		}
 	}
@@ -190,10 +209,10 @@ int main(void)
 
 	reset_alarms();
 
-	uint16_t output_pins[] = {GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14};
+	uint16_t output_pins[] = {GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11};
 	uint16_t input_pins[] = {GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3};
 	keyboard new_board = {
-			GPIOD, GPIOE, input_pins, output_pins, *on_number, *on_choice
+			GPIOD, GPIOD, input_pins, output_pins, *on_number, *on_choice
 	};
 	board = new_board;
 	keyboard_init(&board);
@@ -238,8 +257,10 @@ int main(void)
 		LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\nD -> RESET\n", BLACK, &lcd2);
 	} else if (menu == 1) {
 		LCD5110_clear(&lcd2);
-		LCD5110_print("H:M DoW\n", BLACK, &lcd2);
-		LCD5110_printf(&lcd2, BLACK, "%02d:%02d %d", ch, cm, cd);
+		LCD5110_printf(&lcd2, BLACK, "SET ALARM:\nHH:MM DoW\n%02d:%02d  %d\n", ch, cm, cd);
+	} else if (menu == 2) {
+		LCD5110_clear(&lcd2);
+		LCD5110_printf(&lcd2, BLACK, "SET TIMER:\nMM:SS\n%02d:%02d\n", cm, cs);
 	}
 
 	if (tim) {
@@ -286,12 +307,11 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /**Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
   RCC_OscInitStruct.PLL.PLLQ = 8;
@@ -306,7 +326,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
