@@ -91,9 +91,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 			reset_alarms();
 
-			set_timer(30, 1);
+			set_timer(30, 0);
 			tim = 1;
-			set_alarm(15, 12, 13);
+			set_alarm(53, 9, 0);
 			al = 1;
 		} else {
 			button_is_pressed = 1;
@@ -139,7 +139,7 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_SPI2_Init();
-  MX_SPI4_Init();
+  MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
 	lcd1.hw_conf.spi_handle = &hspi2;
 	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
@@ -151,11 +151,17 @@ int main(void)
 	lcd1.def_scr = lcd5110_def_scr;
 	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
+	lcd2.hw_conf.spi_handle = &hspi3;
+	lcd2.hw_conf.spi_cs_pin =  LCD2_CS_Pin;
+	lcd2.hw_conf.spi_cs_port = LCD2_CS_GPIO_Port;
+	lcd2.hw_conf.rst_pin =  LCD2_RST_Pin;
+	lcd2.hw_conf.rst_port = LCD2_RST_GPIO_Port;
+	lcd2.hw_conf.dc_pin =  LCD2_DC_Pin;
+	lcd2.hw_conf.dc_port = LCD2_DC_GPIO_Port;
+	lcd2.def_scr = lcd5110_def_scr;
+	LCD5110_init(&lcd2.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
+
 	reset_alarms();
-
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, 0);
-
 
 //	set_time(30, 54, 18, 7, 13, 1, 19);
 
@@ -174,44 +180,36 @@ int main(void)
 	date = toDEC(aTxBuffer[4]);
 	month = toDEC(aTxBuffer[5]);
 	year = toDEC(aTxBuffer[6]);
-
 	tim_sec = toDEC(aTxBuffer[7]);
 	tim_min = toDEC(aTxBuffer[8]);
 
 	if (tim && (aTxBuffer[15] & 0b1)) {
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		reset_flag1();
 		tim = 0;
 	}
 
 	if (al && (aTxBuffer[15] & 0b10)) {
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		reset_flag2();
 		al = 0;
 	}
 
+	LCD5110_clear(&lcd2);
+	LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\nD -> RESET\n", BLACK, &lcd2);
+
 	LCD5110_clear(&lcd1);
-	LCD5110_printf(&lcd1, BLACK, "   %02d:%02d:%02d\n", hour, min, sec);
-	LCD5110_printf(&lcd1, BLACK, "%s\n", days[day-1 % 7]);
-	LCD5110_printf(&lcd1, BLACK, " % 2d %s 20%02d\n", date, mon[month-1 % 12], year);
+	LCD5110_printf(&lcd1, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
 
 	if (tim) {
-		uint8_t sec_left, min_left;
+		uint8_t sec_left = tim_sec - sec;
+		uint8_t min_left = tim_min - min;
 
-		sec_left = tim_sec - sec;
-		min_left = tim_min - min;
-
-		if (sec_left < 0) {
+		if (sec_left > 59) {
 			sec_left += 60;
 			min_left--;
 		}
-		if (min_left < 0) {
-			min_left += 60;
-		}
+		if (min_left > 59) min_left += 60;
 
-		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
+		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", tim_sec - sec, sec_left);
 	} else {
 		LCD5110_print("TIMER   ", BLACK, &lcd1);
 	}
@@ -221,10 +219,7 @@ int main(void)
 		LCD5110_print("ALARM\n", BLACK, &lcd1);
 	}
 
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
-
-	HAL_Delay(1000);
+	HAL_Delay(250);
 
     /* USER CODE END WHILE */
 

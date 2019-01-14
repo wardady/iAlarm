@@ -139,7 +139,7 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_SPI2_Init();
-  MX_SPI4_Init();
+  MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
 	lcd1.hw_conf.spi_handle = &hspi2;
 	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
@@ -151,7 +151,7 @@ int main(void)
 	lcd1.def_scr = lcd5110_def_scr;
 	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-	lcd2.hw_conf.spi_handle = &hspi4;
+	lcd2.hw_conf.spi_handle = &hspi3;
 	lcd2.hw_conf.spi_cs_pin =  LCD2_CS_Pin;
 	lcd2.hw_conf.spi_cs_port = LCD2_CS_GPIO_Port;
 	lcd2.hw_conf.rst_pin =  LCD2_RST_Pin;
@@ -171,6 +171,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+
 	get_buffer();
 
 	sec = toDEC(aTxBuffer[0]);
@@ -231,8 +234,10 @@ int main(void)
 		LCD5110_print("ALARM\n", BLACK, &lcd1);
 	}
 
+//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
 
-	HAL_Delay(100);
+	HAL_Delay(1000);
 
     /* USER CODE END WHILE */
 

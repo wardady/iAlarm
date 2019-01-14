@@ -1,0 +1,17 @@
+/*
+ * keyb.h
+ *
+ *  Created on: Jan 13, 2019
+ *      Author: quinsy
+ */
+
+#ifndef KEYB_H_
+#define KEYB_H_
+
+void print_text();
+void interface_init();
+void interface_on_input();
+void interface_on_input_w_pin();
+void interface_display();
+
+#endif /* KEYB_H_ */
