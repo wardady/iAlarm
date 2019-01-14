@@ -301,7 +301,7 @@ int LCD5110_printf( LCD5110_display* lcd_conf, int color, char *fmt, ...)
 void LCD5110_clear(LCD5110_display* display)
 {
 	LCD5110_clear_scr(display);
-	LCD5110_set_cursor(0, 0, display);
+	LCD5110_set_cursor(2, 0, display);
 }
 
 void LCD5110_clear_print(char* str, int color, LCD5110_display* display)

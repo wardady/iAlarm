@@ -48,6 +48,7 @@
 /* USER CODE BEGIN Includes */
 #include "lcd5110.h"
 #include "rtc.h"
+#include "keyb.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,6 +73,9 @@ uint8_t aTxBuffer[18];
 const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t tim = 0, al = 0;
+keyboard board;
+LCD5110_display lcd1, lcd2;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,21 +95,38 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 			reset_alarms();
 
-			set_timer(30, 1);
+			set_timer(30, 0);
 			tim = 1;
-			set_alarm(15, 12, 13);
+			set_alarm(53, 9, 0);
 			al = 1;
 		} else {
 			button_is_pressed = 1;
 		}
+	} else {
+		keyboard_on_input(&board);
 	}
 }
 
+static void on_number(int x) {
+	LCD5110_clear(&lcd2);
+	LCD5110_printf(&lcd2, BLACK, "%d", x);
+}
+
+static void on_choice(button x) {
+	char c = ' ';
+	if (x == button_a) c = 'a';
+	else if (x == button_b) c = 'b';
+	else if (x == button_c) c = 'c';
+	else if (x == button_d) c = 'd';
+//	else if (x == button_star) c = '*';
+//	else if (x == button_hash) c = '#';;
+	LCD5110_clear(&lcd2);
+	LCD5110_printf(&lcd2, BLACK, "%c", c);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-LCD5110_display lcd1, lcd2;
 
 /* USER CODE END 0 */
 
@@ -163,6 +184,14 @@ int main(void)
 
 	reset_alarms();
 
+	uint16_t output_pins[] = {GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14};
+	uint16_t input_pins[] = {GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4};
+	keyboard new_board = {
+			GPIOD, GPIOE, input_pins, output_pins, *on_number, *on_choice
+	};
+	board = new_board;
+	keyboard_init(&board);
+
 //	set_time(30, 54, 18, 7, 13, 1, 19);
 
   /* USER CODE END 2 */
@@ -171,9 +200,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
-
 	get_buffer();
 
 	sec = toDEC(aTxBuffer[0]);
@@ -183,48 +209,36 @@ int main(void)
 	date = toDEC(aTxBuffer[4]);
 	month = toDEC(aTxBuffer[5]);
 	year = toDEC(aTxBuffer[6]);
-
 	tim_sec = toDEC(aTxBuffer[7]);
 	tim_min = toDEC(aTxBuffer[8]);
 
 	if (tim && (aTxBuffer[15] & 0b1)) {
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		reset_flag1();
 		tim = 0;
 	}
 
 	if (al && (aTxBuffer[15] & 0b10)) {
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		reset_flag2();
 		al = 0;
 	}
 
-	LCD5110_clear_scr(&lcd2);
-	LCD5110_set_cursor(0, 0, &lcd2);
-	LCD5110_print("Hello\n", BLACK, &lcd2);
+//	LCD5110_clear(&lcd2);
+//	LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\nD -> RESET\n", BLACK, &lcd2);
 
 	LCD5110_clear(&lcd1);
-	LCD5110_printf(&lcd1, BLACK, "   %02d:%02d:%02d\n", hour, min, sec);
-	LCD5110_printf(&lcd1, BLACK, "%s\n", days[day-1 % 7]);
-	LCD5110_printf(&lcd1, BLACK, " % 2d %s 20%02d\n", date, mon[month-1 % 12], year);
+	LCD5110_printf(&lcd1, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
 
 	if (tim) {
-		uint8_t sec_left, min_left;
+		uint8_t sec_left = tim_sec - sec;
+		uint8_t min_left = tim_min - min;
 
-		sec_left = tim_sec - sec;
-		min_left = tim_min - min;
-
-		if (sec_left < 0) {
+		if (sec_left > 59) {
 			sec_left += 60;
 			min_left--;
 		}
-		if (min_left < 0) {
-			min_left += 60;
-		}
+		if (min_left > 59) min_left += 60;
 
-		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
+		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", tim_sec - sec, sec_left);
 	} else {
 		LCD5110_print("TIMER   ", BLACK, &lcd1);
 	}
@@ -234,10 +248,7 @@ int main(void)
 		LCD5110_print("ALARM\n", BLACK, &lcd1);
 	}
 
-//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
-//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
-
-	HAL_Delay(1000);
+	HAL_Delay(250);
 
     /* USER CODE END WHILE */
 

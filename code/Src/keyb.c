@@ -56,7 +56,6 @@ void keyboard_on_input(keyboard* board) {
 		int col_pin = -1;
 		int row_pin = -1;
 
-		HAL_GPIO_WritePin(GPIOD, 14, 1);
 		// get col_pin
 		// loop through all input pins and find which of them is pressed
 		for (int input_pin = 0; input_pin < 4; ++input_pin) {

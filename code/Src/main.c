@@ -48,6 +48,7 @@
 /* USER CODE BEGIN Includes */
 #include "lcd5110.h"
 #include "rtc.h"
+#include "keyb.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,9 +70,13 @@
 
 /* USER CODE BEGIN PV */
 uint8_t aTxBuffer[18];
+uint8_t menu, input, ch, cm, cs, cd;
 const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t tim = 0, al = 0;
+keyboard board;
+LCD5110_display lcd1, lcd2;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,32 +85,54 @@ void SystemClock_Config(void);
 volatile int button_is_pressed = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if( GPIO_Pin == GPIO_PIN_0) {
-		static uint32_t last_change_tick;
-		if( HAL_GetTick() - last_change_tick < 50 ) {
-			return;
-		}
-		last_change_tick = HAL_GetTick();
-		if(button_is_pressed) {
-			button_is_pressed = 0;
+	keyboard_on_input(&board);
+}
 
-			reset_alarms();
-
-			set_timer(30, 0);
-			tim = 1;
-			set_alarm(53, 9, 0);
-			al = 1;
-		} else {
-			button_is_pressed = 1;
+static void on_number(int x) {
+	if (menu == 1) {
+		if (input == 0) {
+			ch = (ch * 10 + x) % 100;
+		} else if (input == 1) {
+			cm = (cm * 10 + x) % 100;
+		} else if (input == 2) {
+			cd = x % 10;
 		}
 	}
 }
 
+static void on_choice(button x) {
+	if (menu == 0) {
+		if (x == button_a) {
+			menu = 1;
+			input = 0;
+			ch = 0; cm = 0; cd = 0;
+		}
+	} else if (menu == 1) {
+		if (x == button_a) {
+			if (input == 0) {
+				input = 1;
+			} else if (input == 1) {
+				input = 2;
+			} else if (input == 2) {
+				input = 0; al = 1; menu = 0;
+				set_alarm(cm, ch, cd);
+				ch = 0; cm = 0; cd = 0;
+			}
+		} else if (x == button_b) {
+			if (input == 0) {
+				input = 2;
+			} else if (input == 1) {
+				input = 0;
+			} else if (input == 2) {
+				input = 1;
+			}
+		}
+	}
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-LCD5110_display lcd1, lcd2;
 
 /* USER CODE END 0 */
 
@@ -163,6 +190,16 @@ int main(void)
 
 	reset_alarms();
 
+	uint16_t output_pins[] = {GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14};
+	uint16_t input_pins[] = {GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3};
+	keyboard new_board = {
+			GPIOD, GPIOE, input_pins, output_pins, *on_number, *on_choice
+	};
+	board = new_board;
+	keyboard_init(&board);
+
+	menu = 0;
+
 //	set_time(30, 54, 18, 7, 13, 1, 19);
 
   /* USER CODE END 2 */
@@ -193,11 +230,17 @@ int main(void)
 		al = 0;
 	}
 
-	LCD5110_clear(&lcd2);
-	LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\nD -> RESET\n", BLACK, &lcd2);
-
 	LCD5110_clear(&lcd1);
 	LCD5110_printf(&lcd1, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
+
+	if (menu == 0) {
+		LCD5110_clear(&lcd2);
+		LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\nD -> RESET\n", BLACK, &lcd2);
+	} else if (menu == 1) {
+		LCD5110_clear(&lcd2);
+		LCD5110_print("H:M DoW\n", BLACK, &lcd2);
+		LCD5110_printf(&lcd2, BLACK, "%02d:%02d %d", ch, cm, cd);
+	}
 
 	if (tim) {
 		uint8_t sec_left = tim_sec - sec;
@@ -219,7 +262,7 @@ int main(void)
 		LCD5110_print("ALARM\n", BLACK, &lcd1);
 	}
 
-	HAL_Delay(250);
+	HAL_Delay(100);
 
     /* USER CODE END WHILE */
 
