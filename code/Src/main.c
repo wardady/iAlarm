@@ -97,7 +97,11 @@ static void on_number(int x) {
 			cd = x % 10;
 		}
 	} else if (menu == 2) {
-		ch = 0;
+		if (input == 0) {
+			cm = (cm * 10 + x) % 100;
+		} else if (input == 1) {
+			cs = (cs * 10 + x) % 100;
+		}
 	}
 }
 
@@ -267,13 +271,13 @@ int main(void)
 		uint8_t sec_left = tim_sec - sec;
 		uint8_t min_left = tim_min - min;
 
-		if (sec_left > 59) {
+		if (sec_left < 0) {
 			sec_left += 60;
 			min_left--;
 		}
-		if (min_left > 59) min_left += 60;
+		if (min_left < 0) min_left += 60;
 
-		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", tim_sec - sec, sec_left);
+		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
 	} else {
 		LCD5110_print("TIMER   ", BLACK, &lcd1);
 	}
