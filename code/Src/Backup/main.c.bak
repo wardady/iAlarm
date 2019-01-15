@@ -70,13 +70,12 @@
 
 /* USER CODE BEGIN PV */
 uint8_t aTxBuffer[18];
-uint8_t menu, input, ch, cm, cs, cd;
-const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
-const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-uint8_t tim = 0, al = 0;
+uint8_t tim = 0, al = 0, menu = 0, input = 0, ch = 0, cm = 0, cs = 0, cd = 0;
 keyboard board;
 LCD5110_display lcd1, lcd2;
 
+const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
+const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,7 +96,11 @@ static void on_number(int x) {
 			cd = x % 10;
 		}
 	} else if (menu == 2) {
-		ch = 0;
+		if (input == 0) {
+			cm = (cm * 10 + x) % 100;
+		} else if (input == 1) {
+			cs = (cs * 10 + x) % 100;
+		}
 	}
 }
 
@@ -109,6 +112,9 @@ static void on_choice(button x) {
 		} else if (x == button_b) {
 			menu = 2; input = 0;
 			cm = 0; cs = 0;
+		} else if ((tim == 2) && (x == button_star)) {
+			tim = 0;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
 		}
 	} else if (menu == 1) {
 		if (x == button_a) {
@@ -217,8 +223,7 @@ int main(void)
 	board = new_board;
 	keyboard_init(&board);
 
-	menu = 0;
-
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 1);
 //	set_time(30, 54, 18, 7, 13, 1, 19);
 
   /* USER CODE END 2 */
@@ -241,7 +246,8 @@ int main(void)
 
 	if (tim && (aTxBuffer[15] & 0b1)) {
 		reset_flag1();
-		tim = 0;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 1);
+		tim = 2;
 	}
 
 	if (al && (aTxBuffer[15] & 0b10)) {
@@ -263,7 +269,7 @@ int main(void)
 		LCD5110_printf(&lcd2, BLACK, "SET TIMER:\nMM:SS\n%02d:%02d\n", cm, cs);
 	}
 
-	if (tim) {
+	if (tim == 1) {
 		uint8_t sec_left = tim_sec - sec;
 		uint8_t min_left = tim_min - min;
 
@@ -273,8 +279,11 @@ int main(void)
 		}
 		if (min_left > 59) min_left += 60;
 
-		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", tim_sec - sec, sec_left);
-	} else {
+		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
+	} else if (tim == 2) {
+		LCD5110_print("TIMER", WHITE, &lcd1);
+		LCD5110_print("   ", BLACK, &lcd1);
+	} else if (tim == 0) {
 		LCD5110_print("TIMER   ", BLACK, &lcd1);
 	}
 	if (al) {

@@ -46,6 +46,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdlib.h>
+
 #include "lcd5110.h"
 #include "rtc.h"
 #include "keyb.h"
@@ -70,13 +72,13 @@
 
 /* USER CODE BEGIN PV */
 uint8_t aTxBuffer[18];
-uint8_t menu, input, ch, cm, cs, cd;
-const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
-const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-uint8_t tim = 0, al = 0;
+uint8_t tim = 0, al = 0, menu = 0, input = 0, ch = 0, cm = 0, cs = 0, cd = 0, cdt =0, cmn = 0, cy = 0, hash = 4, hint = 0;
+int16_t ax, bx, ay, by, az, bz, ae, be;
 keyboard board;
 LCD5110_display lcd1, lcd2;
 
+const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
+const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,13 +96,37 @@ static void on_number(int x) {
 		} else if (input == 1) {
 			cm = (cm * 10 + x) % 100;
 		} else if (input == 2) {
-			cd = x % 10;
+			cd = x;
 		}
 	} else if (menu == 2) {
 		if (input == 0) {
 			cm = (cm * 10 + x) % 100;
 		} else if (input == 1) {
 			cs = (cs * 10 + x) % 100;
+		}
+	} else if (menu == 3) {
+		if (input == 0) {
+			ch = (ch * 10 + x) % 100;
+		} else if (input == 1) {
+			cm = (cm * 10 + x) % 100;
+		} else if (input == 2) {
+			cs = (cs * 10 + x) % 100;
+		} else if (input == 3) {
+			cd = x;
+		} else if (input == 4) {
+			cdt = (cdt * 10 + x) % 100;
+		} else if (input == 5) {
+			cmn = (cmn * 10 + x) % 100;
+		} else if (input == 6) {
+			cy = (cy * 10 + x) % 100;
+		}
+	} else if (menu == 4) {
+		if (input == 0) {
+			if (ae < 0) az = -1 * ((abs(az) * 10 + x) % 1000);
+			else az = (az * 10 + x) % 1000;
+		} else if (input == 1) {
+			if (be < 0) bz = -1 * ((abs(bz) * 10 + x) % 1000);
+			else bz = (bz * 10 + x) % 1000;
 		}
 	}
 }
@@ -113,6 +139,20 @@ static void on_choice(button x) {
 		} else if (x == button_b) {
 			menu = 2; input = 0;
 			cm = 0; cs = 0;
+		} else if (x == button_c) {
+			menu = 3; input = 0;
+			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
+		} else if (x == button_d) {
+			reset_alarms();
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
+			tim = 0; al = 0;
+		} else if ((tim == 2) && (x == button_star)) {
+			tim = 0;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 		}
 	} else if (menu == 1) {
 		if (x == button_a) {
@@ -121,9 +161,7 @@ static void on_choice(button x) {
 			} else if (input == 1) {
 				input = 2;
 			} else if (input == 2) {
-				input = 0; al = 1; menu = 0;
-				set_alarm(cm, ch, cd);
-				ch = 0; cm = 0; cd = 0;
+				input = 0;
 			}
 		} else if (x == button_b) {
 			if (input == 0) {
@@ -133,21 +171,106 @@ static void on_choice(button x) {
 			} else if (input == 2) {
 				input = 1;
 			}
+		} else if (x == button_c) {
+			menu = 0; input = 0; ch = 0; cm = 0; cd = 0;
+		} else if (x == button_d) {
+			input = 0; al = 1; menu = 0;
+			set_alarm(cm, ch, cd);
+			ch = 0; cm = 0; cd = 0;
 		}
 	} else if (menu == 2) {
 		if (x == button_a) {
 			if (input == 0) {
 				input = 1;
 			} else if (input == 1) {
-				input = 0; tim = 1; menu = 0;
-				set_timer(cs, cm);
-				cs = 0; cm = 0;
+				input = 0;
 			}
 		} else if (x == button_b) {
 			if (input == 0) {
 				input = 1;
 			} else if (input == 1) {
 				input = 0;
+			}
+		} else if (x == button_c) {
+			menu = 0; input = 0; cs = 0; cm = 0;
+		} else if (x == button_d) {
+			input = 0; tim = 1; menu = 0;
+			set_timer(cs, cm);
+			cs = 0; cm = 0;
+		}
+	} else if (menu == 3) {
+		if (x == button_a) {
+			if (input == 0) {
+				input = 1;
+			} else if (input == 1) {
+				input = 2;
+			} else if (input == 2) {
+				input = 3;
+			} else if (input == 3) {
+				input = 4;
+			} else if (input == 4) {
+				input = 5;
+			} else if (input == 5) {
+				input = 6;
+			} else if (input == 6) {
+				input = 0;
+			}
+		} else if (x == button_b) {
+			if (input == 0) {
+				input = 6;
+			} else if (input == 1) {
+				input = 0;
+			} else if (input == 2) {
+				input = 1;
+			} else if (input == 3) {
+				input = 2;
+			} else if (input == 4) {
+				input = 3;
+			} else if (input == 5) {
+				input = 4;
+			} else if (input == 6) {
+				input = 5;
+			}
+		} else if (x == button_c) {
+			menu = 0; input = 0;
+			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
+		} else if (x == button_d) {
+			set_time(cs, cm, ch, cd, cdt, cmn, cy);
+			menu = 0; input = 0;
+			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
+		}
+	} else if (menu == 4) {
+		if (x == button_a) {
+			if (input == 0) {
+				input = 1;
+			} else if (input == 1) {
+				input = 0;
+			}
+		} else if (x == button_b) {
+			if (input == 0) {
+				input = 1;
+			} else if (input == 1) {
+				input = 0;
+			}
+		} else if (x == button_d) {
+			if ((az == ae) && (bz == be)) {
+				menu = 0; input = 0;
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
+			} else {
+				input = 0;
+				ax = (rand() % 40) - 20; bx = (rand() % 40) - 20;
+				ay = (rand() % 40) - 20; by = (rand() % 40) - 20;
+				ae = ax*ay - bx*by; be = ax*by + bx*ay;
+				az = 0; bz = 0;
+				hint = 0; hash = 4;
+			}
+		}
+		else if (x == button_hash) {
+			if (hash) hash--;
+			else {
+				hash = 4;
+				hint = 1;
 			}
 		}
 	}
@@ -221,9 +344,11 @@ int main(void)
 	board = new_board;
 	keyboard_init(&board);
 
-	menu = 0;
-
-//	set_time(30, 54, 18, 7, 13, 1, 19);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
+//	set_time(0, 47, 0, 1, 15, 1, 19);
 
   /* USER CODE END 2 */
 
@@ -245,12 +370,20 @@ int main(void)
 
 	if (tim && (aTxBuffer[15] & 0b1)) {
 		reset_flag1();
-		tim = 0;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 1);
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
+		tim = 2;
 	}
 
 	if (al && (aTxBuffer[15] & 0b10)) {
 		reset_flag2();
-		al = 0;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
+		ax = (rand() % 40) - 20; bx = (rand() % 40) - 20;
+		ay = (rand() % 40) - 20; by = (rand() % 40) - 20;
+		az = 0; bz = 0;
+		ae = ax*ay - bx*by; be = ax*by + bx*ay;
+		menu = 4; input = 0; hint = 0;
 	}
 
 	LCD5110_clear(&lcd1);
@@ -265,20 +398,30 @@ int main(void)
 	} else if (menu == 2) {
 		LCD5110_clear(&lcd2);
 		LCD5110_printf(&lcd2, BLACK, "SET TIMER:\nMM:SS\n%02d:%02d\n", cm, cs);
+	} else if (menu == 3) {
+		LCD5110_clear(&lcd2);
+		LCD5110_printf(&lcd2, BLACK, "SET TIME:\n   %02d:%02d:%02d\n      %0d      \n % 2d  %d  20%02d\n", ch, cm, cs, cd, cdt, cmn, cy);
+	} else if (menu == 4) {
+		LCD5110_clear(&lcd2);
+		if (hint) LCD5110_printf(&lcd2, BLACK, "%d + %di\n%d + %di\n%d + %di\n%d + %di\n", ax, bx, ay, by, ae, be, az, bz);
+		else LCD5110_printf(&lcd2, BLACK, "%d + %di\n%d + %di\n-------------\n%d + %di\n", ax, bx, ay, by, az, bz);
 	}
 
-	if (tim) {
+	if (tim == 1) {
 		uint8_t sec_left = tim_sec - sec;
 		uint8_t min_left = tim_min - min;
 
-		if (sec_left < 0) {
+		if (sec_left > 59) {
 			sec_left += 60;
 			min_left--;
 		}
-		if (min_left < 0) min_left += 60;
+		if (min_left > 59) min_left += 60;
 
 		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
-	} else {
+	} else if (tim == 2) {
+		LCD5110_print("TIMER", WHITE, &lcd1);
+		LCD5110_print("   ", BLACK, &lcd1);
+	} else if (tim == 0) {
 		LCD5110_print("TIMER   ", BLACK, &lcd1);
 	}
 	if (al) {
