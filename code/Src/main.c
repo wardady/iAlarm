@@ -51,6 +51,7 @@
 #include "lcd5110.h"
 #include "rtc.h"
 #include "keyb.h"
+#include "queue.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,10 +73,13 @@
 
 /* USER CODE BEGIN PV */
 uint8_t aTxBuffer[18];
-uint8_t tim = 0, al = 0, menu = 0, input = 0, ch = 0, cm = 0, cs = 0, cd = 0, cdt =0, cmn = 0, cy = 0, hash = 4, hint = 0;
+uint8_t tim = 0, menu = 0, input = 0, rep = 0, ch = 0, cm = 0, cs = 0, cd = 0, cdt =0, cmn = 0, cy = 0, hash = 4, hint = 0;
 int16_t ax, bx, ay, by, az, bz, ae, be;
 keyboard board;
 LCD5110_display lcd1, lcd2;
+
+Queue xq = {{}, 0};
+Queue *q = &xq;
 
 const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -100,6 +104,8 @@ static void on_number(int x)
 			cm = (cm * 10 + x) % 100;
 		} else if (input == 2) {
 			cd = x;
+		} else if (input == 3) {
+			rep = x;
 		}
 	} else if (menu == 2) {
 		if (input == 0) {
@@ -140,20 +146,21 @@ static void on_choice(button x)
 	if (menu == 0) {
 		if (x == button_a) {
 			menu = 1; input = 0;
-			ch = 0; cm = 0; cd = 0;
+			ch = 0; cm = 0; cd = 0; rep = 0;
 		} else if (x == button_b) {
 			menu = 2; input = 0;
 			cm = 0; cs = 0;
 		} else if (x == button_c) {
 			menu = 3; input = 0;
 			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
-		} else if (x == button_d) {
+		} else if (x == button_hash) {
 			reset_alarms();
+			clear_queue(q);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
-			tim = 0; al = 0;
+			tim = 0;
 		} else if ((tim == 2) && (x == button_star)) {
 			tim = 0;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
@@ -161,17 +168,18 @@ static void on_choice(button x)
 		}
 	} else if (menu == 1) {
 		if (x == button_a)
-			input = (input + 1) % 3;
+			input = (input + 1) % 4;
 		else if (x == button_b) {
 			if (input == 0) {
-				input = 2;
+				input = 3;
 			} else input--;
 		} else if (x == button_c) {
-			menu = 0; input = 0; ch = 0; cm = 0; cd = 0;
+			menu = 0; input = 0; ch = 0; cm = 0; cd = 0; rep = 0;
 		} else if (x == button_d) {
-			input = 0; al = 1; menu = 0;
-			set_alarm(cm, ch, cd);
-			ch = 0; cm = 0; cd = 0;
+			input = 0; menu = 0;
+			if (!(insert(q, cm, ch, cd, rep)))
+				set_alarm(q->queue[0].min, q->queue[0].hour, q->queue[0].dotw);
+			ch = 0; cm = 0; cd = 0; rep = 0;
 		}
 	} else if (menu == 2) {
 		if ((x == button_a) || (x == button_b))
@@ -328,12 +336,14 @@ int main(void)
 	}
 
 	//alarm activation
-	if (al && (aTxBuffer[15] & 0b10)) {
+	if (q->size && (aTxBuffer[15] & 0b10)) {
 		reset_flag2();
+		Alarm al = next(q);
+		set_alarm(al.min, al.hour, al.dotw);
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
-		ax = (rand() % 40) - 20; bx = (rand() % 40) - 20;
-		ay = (rand() % 40) - 20; by = (rand() % 40) - 20;
+		ax = (rand() % 41) - 20; bx = (rand() % 41) - 20;
+		ay = (rand() % 41) - 20; by = (rand() % 41) - 20;
 		az = 0; bz = 0;
 		ae = ax*ay - bx*by; be = ax*by + bx*ay;
 		menu = 4; input = 0; hint = 0;
@@ -357,7 +367,7 @@ int main(void)
 		LCD5110_print("TIMER", WHITE, &lcd1);
 		LCD5110_print("   ", BLACK, &lcd1);
 	}
-	if (al)
+	if (q->size)
 		LCD5110_print("ALARM\n", WHITE, &lcd1);
 	else
 		LCD5110_print("ALARM\n", BLACK, &lcd1);
@@ -365,9 +375,9 @@ int main(void)
 	//second display info
 	LCD5110_clear(&lcd2);
 	if (menu == 0)
-		LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\nD -> RESET\n", BLACK, &lcd2);
+		LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\n# -> RESET\n", BLACK, &lcd2);
 	else if (menu == 1)
-		LCD5110_printf(&lcd2, BLACK, "SET ALARM:\nHH:MM DoW\n%02d:%02d  %d\n", ch, cm, cd);
+		LCD5110_printf(&lcd2, BLACK, "SET ALARM:\nHH:MM D R\n%02d:%02d %d %d\n", ch, cm, cd, rep);
 	else if (menu == 2)
 		LCD5110_printf(&lcd2, BLACK, "SET TIMER:\nMM:SS\n%02d:%02d\n", cm, cs);
 	else if (menu == 3)
