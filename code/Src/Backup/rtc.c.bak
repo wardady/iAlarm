@@ -30,13 +30,13 @@ void get_buffer()
 void set_time(uint8_t sec, uint8_t min, uint8_t hour, uint8_t day, uint8_t date, uint8_t month, uint8_t year)
 {
 	aTxBuffer[0] = 0;
-	aTxBuffer[1] = fromDEC(sec);
-	aTxBuffer[2]= fromDEC(min);
-	aTxBuffer[3] = fromDEC(hour);
-	aTxBuffer[4] = fromDEC(day);
-	aTxBuffer[5] = fromDEC(date);
-	aTxBuffer[6] = fromDEC(month);
-	aTxBuffer[7] = fromDEC(year);
+	aTxBuffer[1] = fromDEC(sec % 60);
+	aTxBuffer[2]= fromDEC(min % 60);
+	aTxBuffer[3] = fromDEC(hour % 24);
+	aTxBuffer[4] = fromDEC((day % 7) + 1);
+	aTxBuffer[5] = fromDEC(date % 32);
+	aTxBuffer[6] = fromDEC(month % 13);
+	aTxBuffer[7] = fromDEC(year % 100);
 
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 1);
 	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {}
@@ -65,8 +65,8 @@ void set_timer(uint8_t sec, uint8_t min)
 {
 	get_buffer();
 
-	aTxBuffer[8] = toDEC(aTxBuffer[0]) + sec;
-	aTxBuffer[9] = toDEC(aTxBuffer[1]) + (aTxBuffer[8] / 60) + min;
+	aTxBuffer[8] = toDEC(aTxBuffer[0]) + (sec % 60);
+	aTxBuffer[9] = toDEC(aTxBuffer[1]) + (aTxBuffer[8] / 60) + (min % 60);
 	aTxBuffer[10] = toDEC(aTxBuffer[2]) + (aTxBuffer[9] / 60);
 	aTxBuffer[11] = toDEC(aTxBuffer[4]) + (aTxBuffer[10] / 24);
 

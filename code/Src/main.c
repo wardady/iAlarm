@@ -61,7 +61,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define MAX_RND 20
+#define MIN_RND -20
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -156,6 +157,8 @@ static void on_choice(button x)
 		} else if (x == button_hash) {
 			reset_alarms();
 			clear_queue(q);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
@@ -163,6 +166,8 @@ static void on_choice(button x)
 			tim = 0;
 		} else if ((tim == 2) && (x == button_star)) {
 			tim = 0;
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 		}
@@ -213,12 +218,14 @@ static void on_choice(button x)
 		else if (x == button_d) {
 			if ((az == ae) && (bz == be)) {
 				menu = 0; input = 0;
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
 			} else {
 				input = 0;
-				ax = (rand() % 40) - 20; bx = (rand() % 40) - 20;
-				ay = (rand() % 40) - 20; by = (rand() % 40) - 20;
+				ax = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; bx = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
+				ay = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; by = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
 				ae = ax*ay - bx*by; be = ax*by + bx*ay;
 				az = 0; bz = 0;
 				hint = 0; hash = 4;
@@ -304,6 +311,8 @@ int main(void)
 
 	//reset system
 	reset_alarms();
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 0);
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
@@ -330,6 +339,8 @@ int main(void)
 	//timer activation
 	if (tim && (aTxBuffer[15] & 0b1)) {
 		reset_flag1();
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, 1);
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 		tim = 2;
@@ -340,10 +351,12 @@ int main(void)
 		reset_flag2();
 		Alarm al = next(q);
 		set_alarm(al.min, al.hour, al.dotw);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
-		ax = (rand() % 41) - 20; bx = (rand() % 41) - 20;
-		ay = (rand() % 41) - 20; by = (rand() % 41) - 20;
+		ax = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; bx = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
+		ay = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; by = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
 		az = 0; bz = 0;
 		ae = ax*ay - bx*by; be = ax*by + bx*ay;
 		menu = 4; input = 0; hint = 0;
