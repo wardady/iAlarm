@@ -52,6 +52,8 @@
 #include "rtc.h"
 #include "keyb.h"
 #include "queue.h"
+#include "interface.h"
+#include "problem.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,8 +63,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MAX_RND 20
-#define MIN_RND -20
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -74,8 +75,10 @@
 
 /* USER CODE BEGIN PV */
 uint8_t aTxBuffer[18];
-uint8_t tim = 0, menu = 0, input = 0, rep = 0, ch = 0, cm = 0, cs = 0, cd = 0, cdt =0, cmn = 0, cy = 0, hash = 4, hint = 0;
-int16_t ax, bx, ay, by, az, bz, ae, be;
+uint8_t tim = 0, alrm = 0, i = 0, difficulty = 0, hash = 4, hint = 0;
+uint8_t input[7] = {0, 0, 0, 0, 0, 0, 0};
+int num1, num2, num3, num4, enum1, enum2, unum1, unum2;
+menu cmenu = main_menu;
 keyboard board;
 LCD5110_display lcd1, lcd2;
 
@@ -83,7 +86,9 @@ Queue xq = {{}, 0};
 Queue *q = &xq;
 
 const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
+const char *d[7] = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+const char *diff[3] = {"EASY", "MEDIUM", "HARD"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,144 +98,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	//check what button was pressed
 	keyboard_on_input(&board);
-}
-
-//is called after number is pressed
-static void on_number(int x)
-{
-	if (menu == 1) {
-		if (input == 0) {
-			ch = (ch * 10 + x) % 100;
-		} else if (input == 1) {
-			cm = (cm * 10 + x) % 100;
-		} else if (input == 2) {
-			cd = x;
-		} else if (input == 3) {
-			rep = x;
-		}
-	} else if (menu == 2) {
-		if (input == 0) {
-			cm = (cm * 10 + x) % 100;
-		} else if (input == 1) {
-			cs = (cs * 10 + x) % 100;
-		}
-	} else if (menu == 3) {
-		if (input == 0) {
-			ch = (ch * 10 + x) % 100;
-		} else if (input == 1) {
-			cm = (cm * 10 + x) % 100;
-		} else if (input == 2) {
-			cs = (cs * 10 + x) % 100;
-		} else if (input == 3) {
-			cd = x;
-		} else if (input == 4) {
-			cdt = (cdt * 10 + x) % 100;
-		} else if (input == 5) {
-			cmn = (cmn * 10 + x) % 100;
-		} else if (input == 6) {
-			cy = (cy * 10 + x) % 100;
-		}
-	} else if (menu == 4) {
-		if (input == 0) {
-			if (ae < 0) az = -1 * ((abs(az) * 10 + x) % 1000);
-			else az = (az * 10 + x) % 1000;
-		} else if (input == 1) {
-			if (be < 0) bz = -1 * ((abs(bz) * 10 + x) % 1000);
-			else bz = (bz * 10 + x) % 1000;
-		}
-	}
-}
-
-//is called after non-number button is pressed
-static void on_choice(button x)
-{
-	if (menu == 0) {
-		if (x == button_a) {
-			menu = 1; input = 0;
-			ch = 0; cm = 0; cd = 0; rep = 0;
-		} else if (x == button_b) {
-			menu = 2; input = 0;
-			cm = 0; cs = 0;
-		} else if (x == button_c) {
-			menu = 3; input = 0;
-			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
-		} else if (x == button_hash) {
-			reset_alarms();
-			clear_queue(q);
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
-			tim = 0;
-		} else if ((tim == 2) && (x == button_star)) {
-			tim = 0;
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
-		} else if (x == button_star) {
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 1);
-		}
-	} else if (menu == 1) {
-		if (x == button_a)
-			input = (input + 1) % 4;
-		else if (x == button_b) {
-			if (input == 0) {
-				input = 3;
-			} else input--;
-		} else if (x == button_c) {
-			menu = 0; input = 0; ch = 0; cm = 0; cd = 0; rep = 0;
-		} else if (x == button_d) {
-			input = 0; menu = 0;
-			if (!(insert(q, cm, ch, cd, rep)))
-				set_alarm(q->queue[0].min, q->queue[0].hour, q->queue[0].dotw);
-			ch = 0; cm = 0; cd = 0; rep = 0;
-		}
-	} else if (menu == 2) {
-		if ((x == button_a) || (x == button_b))
-			input = (input + 1) % 2;
-		else if (x == button_c) {
-			menu = 0; input = 0; cs = 0; cm = 0;
-		} else if (x == button_d) {
-			input = 0; tim = 1; menu = 0;
-			set_timer(cs, cm);
-			cs = 0; cm = 0;
-		}
-	} else if (menu == 3) {
-		if (x == button_a)
-			input = (input + 1) % 7;
-		else if (x == button_b) {
-			if (input == 0) {
-				input = 6;
-			} else
-				input--;
-		} else if (x == button_c) {
-			menu = 0; input = 0;
-			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
-		} else if (x == button_d) {
-			set_time(cs, cm, ch, cd, cdt, cmn, cy);
-			menu = 0; input = 0;
-			ch = 0; cm = 0; cs = 0; cd = 0; cdt = 0; cmn = 0; cy = 0;
-		}
-	} else if (menu == 4) {
-		if ((x == button_a) || (x == button_b))
-			input = (input + 1) % 2;
-		else if (x == button_d) {
-			if ((az == ae) && (bz == be)) {
-				menu = 0; input = 0;
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
-			} else {
-				input = 0;
-				ax = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; bx = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
-				ay = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; by = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
-				ae = ax*ay - bx*by; be = ax*by + bx*ay;
-				az = 0; bz = 0;
-				hint = 0; hash = 4;
-			}
-		}
-		else if (x == button_hash) {
-			if (hash)
-				hash--;
-			else {
-				hash = 4;
-				hint = 1;
-			}
-		}
-	}
 }
 /* USER CODE END PFP */
 
@@ -271,30 +138,29 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-  	//first lcd5110 display init
-	lcd1.hw_conf.spi_handle = &hspi2;
-	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
-	lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
-	lcd1.hw_conf.rst_pin =  LCD1_RST_Pin;
-	lcd1.hw_conf.rst_port = LCD1_RST_GPIO_Port;
-	lcd1.hw_conf.dc_pin =  LCD1_DC_Pin;
-	lcd1.hw_conf.dc_port = LCD1_DC_GPIO_Port;
-	lcd1.def_scr = lcd5110_def_scr;
-	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
+  //first lcd5110 display init
+  	lcd1.hw_conf.spi_handle = &hspi2;
+  	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
+  	lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
+  	lcd1.hw_conf.rst_pin =  LCD1_RST_Pin;
+  	lcd1.hw_conf.rst_port = LCD1_RST_GPIO_Port;
+  	lcd1.hw_conf.dc_pin =  LCD1_DC_Pin;
+  	lcd1.hw_conf.dc_port = LCD1_DC_GPIO_Port;
+  	lcd1.def_scr = lcd5110_def_scr;
+  	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-	//second lcd5110 display init
-	lcd2.hw_conf.spi_handle = &hspi3;
-	lcd2.hw_conf.spi_cs_pin =  LCD2_CS_Pin;
-	lcd2.hw_conf.spi_cs_port = LCD2_CS_GPIO_Port;
-	lcd2.hw_conf.rst_pin =  LCD2_RST_Pin;
-	lcd2.hw_conf.rst_port = LCD2_RST_GPIO_Port;
-	lcd2.hw_conf.dc_pin =  LCD2_DC_Pin;
-	lcd2.hw_conf.dc_port = LCD2_DC_GPIO_Port;
-	lcd2.def_scr = lcd5110_def_scr;
-	LCD5110_init(&lcd2.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
+  	//second lcd5110 display init
+  	lcd2.hw_conf.spi_handle = &hspi3;
+  	lcd2.hw_conf.spi_cs_pin =  LCD2_CS_Pin;
+  	lcd2.hw_conf.spi_cs_port = LCD2_CS_GPIO_Port;
+  	lcd2.hw_conf.rst_pin =  LCD2_RST_Pin;
+  	lcd2.hw_conf.rst_port = LCD2_RST_GPIO_Port;
+  	lcd2.hw_conf.dc_pin =  LCD2_DC_Pin;
+  	lcd2.hw_conf.dc_port = LCD2_DC_GPIO_Port;
+  	lcd2.def_scr = lcd5110_def_scr;
+  	LCD5110_init(&lcd2.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-	//4x4 matrix keyboard init
-	uint16_t output_pins[] = {GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11};
+  	uint16_t output_pins[] = {GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11};
 	uint16_t input_pins[] = {GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3};
 	keyboard new_board = {GPIOD, GPIOD, input_pins, output_pins, *on_number, *on_choice};
 	board = new_board;
@@ -302,9 +168,9 @@ int main(void)
 
 	//reset system
 	reset_alarms();
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
 
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 0);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -335,51 +201,54 @@ int main(void)
 		reset_flag2();
 		Alarm al = next(q);
 		set_alarm(al.min, al.hour, al.dotw);
+		alrm = 1;
 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 0);
-
-		ax = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; bx = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
-		ay = (rand() % (MAX_RND - MIN_RND)) + MIN_RND; by = (rand() % (MAX_RND - MIN_RND)) + MIN_RND;
-		az = 0; bz = 0;
-		ae = ax*ay - bx*by; be = ax*by + bx*ay;
-		menu = 4; input = 0; hint = 0;
+		get_problem();
+		cmenu = problem_menu; hint = 0;
 	}
 
 	//first display info
 	LCD5110_clear(&lcd1);
-	LCD5110_printf(&lcd1, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
-	if (tim == 0)
-		LCD5110_print("TIMER   ", BLACK, &lcd1);
+	LCD5110_printf(&lcd1, BLACK, "---iAlarm---\n   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
+	if (tim == 0) LCD5110_print("TIMER   ", BLACK, &lcd1);
 	else if (tim == 1) {
 		uint8_t sec_left = tim_sec - sec, min_left = tim_min - min;
 		if (sec_left > 59) {
 			sec_left += 60;
 			min_left--;
 		}
-		if (min_left > 59)
-			min_left += 60;
+		if (min_left > 59) min_left += 60;
 		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
 	} else if (tim == 2) {
 		LCD5110_print("TIMER", WHITE, &lcd1);
 		LCD5110_print("   ", BLACK, &lcd1);
 	}
-	if (q->size)
-		LCD5110_print("ALARM\n", WHITE, &lcd1);
-	else
-		LCD5110_print("ALARM\n", BLACK, &lcd1);
+	if (q->size) LCD5110_print("ALARM\n", WHITE, &lcd1);
+	else LCD5110_print("ALARM\n", BLACK, &lcd1);
 
 	//second display info
 	LCD5110_clear(&lcd2);
-	if (menu == 0)
-		LCD5110_print("A -> ALARM\nB -> TIMER\nC -> TIME\n# -> RESET\n", BLACK, &lcd2);
-	else if (menu == 1)
-		LCD5110_printf(&lcd2, BLACK, "SET ALARM:\nHH:MM D R\n%02d:%02d %d %d\n", ch, cm, cd, rep);
-	else if (menu == 2)
-		LCD5110_printf(&lcd2, BLACK, "SET TIMER:\nMM:SS\n%02d:%02d\n", cm, cs);
-	else if (menu == 3)
-		LCD5110_printf(&lcd2, BLACK, "SET TIME:\n   %02d:%02d:%02d\n      %0d      \n % 2d  %d  20%02d\n", ch, cm, cs, cd, cdt, cmn, cy);
-	else if (menu == 4) {
-		if (hint) LCD5110_printf(&lcd2, BLACK, "%d + %di\n%d + %di\n%d + %di\n%d + %di\n", ax, bx, ay, by, ae, be, az, bz);
-		else LCD5110_printf(&lcd2, BLACK, "%d + %di\n%d + %di\n-------------\n%d + %di\n", ax, bx, ay, by, az, bz);
+	if (cmenu == main_menu)
+		LCD5110_print("---iAlarm---\nA > ALARM\nB > TIMER\nC > PROBLEM\nD > SETTINGS\n", BLACK, &lcd2);
+	else if (cmenu == alarm_menu)
+		LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  %02d:%02d %s %d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1], d[input[2] % 7], input[3]);
+	else if (cmenu == timer_menu)
+		LCD5110_printf(&lcd2, BLACK, "--SET TIMER--\n     MM:SS\n     %02d:%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1]);
+	else if (cmenu == settings_menu)
+		LCD5110_printf(&lcd2, BLACK, "A > TIME\nB > LIGHTS\nC > PROBLEM\n     %s\nD > SAVE\n", diff[difficulty]);
+	else if (cmenu == time_menu)
+		LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+	else if (cmenu == problem_menu) {
+		if (difficulty == 0) {
+			if (hint) LCD5110_printf(&lcd2, BLACK, "-----ADD-----\n%d\n%d\n%d\n%d\n", num1, num2, enum1, unum1);
+			else LCD5110_printf(&lcd2, BLACK, "-----ADD-----\n%d\n%d\n-------------\n%d\n", num1, num2, unum1);
+		} else if (difficulty == 1) {
+			if (hint) LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d\n%d\n%d\n%d\n", num1, num2, enum1, unum1);
+			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d\n%d\n-------------\n%d\n", num1, num2, unum1);
+		} else if (difficulty == 2) {
+			if (hint) LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d + %di\n%d + %di\n%d + %di\n%d + %di\n", num1, num2, num3, num4, enum1, enum2, unum1, unum2);
+			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d + %di\n%d + %di\n-------------\n%d + %di\n", num1, num2, num3, num4, unum1, unum2);
+		}
 	}
 
 	HAL_Delay(100);
