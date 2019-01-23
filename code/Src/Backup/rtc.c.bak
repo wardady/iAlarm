@@ -35,7 +35,7 @@ void set_time(uint8_t sec, uint8_t min, uint8_t hour, uint8_t day, uint8_t date,
 	aTxBuffer[3] = fromDEC(hour % 24);
 	aTxBuffer[4] = fromDEC((day % 7) + 1);
 	aTxBuffer[5] = fromDEC(date % 32);
-	aTxBuffer[6] = fromDEC(month % 13);
+	aTxBuffer[6] = fromDEC((month + 1) % 12);
 	aTxBuffer[7] = fromDEC(year % 100);
 
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 1);
