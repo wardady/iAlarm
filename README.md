@@ -1,6 +1,6 @@
 # iAlarm
-This alarm will help to wake you up at any time of the day.
-It's also built-in timer there.
+  This alarm will help to wake you up at any time of the day.
+  It's also built-in timer there.
 ## Getting started
 
 ### Prerequisites
@@ -21,13 +21,26 @@ It's also built-in timer there.
   2. Open the iAlarm project in the System Workbench or Keil.
   3. Build and run the project.
 
-## Running the tests
-
-
-## Built With
-
-## Contributing
+### Interface
+  To control to the "iAlarm", you have 2 displays. One of them just show the information
+  about the timer and the alarm, the second one helps to set up the timer, the alarm or 
+  the time.
+  The 1st display:
+  (PHOTO)
+  |   |   |  
+  |---|---|  
+  |   |   |    
+  |   |   |  
+  |   |   |  
+  |   |   |  
+  |   |   |  
+  
+  
+  The 2nd display:
+  
 
 ## Authors
+Chernetskyi Volodymyr, Hermann Yavorskyi, Serhii Rosovskyi
 
 ## License
+ 
