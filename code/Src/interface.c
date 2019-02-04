@@ -24,7 +24,7 @@ extern LCD5110_display lcd1, lcd2;
 extern int num1, num2, num3, num4, enum1, enum2, unum1, unum2;
 extern queue* q;
 
-const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
+const char *days[7] = {"    Monday  ", "   Tuesday  ", "  Wednesday ", "  Thursday ", "    Friday  ", "  Saturday  ", "    Sunday  "};
 const char *d[7] = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 const char *diff[3] = {"EASY", "MEDIUM", "HARD"};
@@ -54,7 +54,7 @@ void on_alarm()
 void display1()
 {
 	LCD5110_clear(&lcd1);
-	LCD5110_printf(&lcd1, BLACK, "---iAlarm---\n   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
+	LCD5110_printf(&lcd1, BLACK, "---iAlarm----\n   %02d:%02d:%02d\n %s\n %2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
 	if (tim == 0) LCD5110_print("TIMER   ", BLACK, &lcd1);
 	else if (tim == 1) {
 		uint8_t sec_left = tim_sec - sec, min_left = tim_min - min;
@@ -76,15 +76,70 @@ void display2()
 {
 	LCD5110_clear(&lcd2);
 	if (cmenu == main_menu)
-		LCD5110_print("---iAlarm---\nA > ALARM\nB > TIMER\nC > PROBLEM\nD > SETTINGS\n", BLACK, &lcd2);
-	else if (cmenu == alarm_menu)
-		LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  %02d:%02d %s %d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1], d[input[2] % 7], input[3]);
-	else if (cmenu == timer_menu)
-		LCD5110_printf(&lcd2, BLACK, "--SET TIMER--\n     MM:SS\n     %02d:%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1]);
+		LCD5110_print("---iAlarm----\nA > ALARM\nB > TIMER\nC > PROBLEM\nD > SETTINGS\n", BLACK, &lcd2);
+	else if (cmenu == alarm_menu) {
+		if (i == 0) {
+			LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  ");
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[0]);
+			LCD5110_printf(&lcd2, BLACK, ":%02d %s %d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[1], d[input[2] % 7], input[3]);
+		} else if (i == 1) {
+			LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  %02d:", input[0]);
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[1]);
+			LCD5110_printf(&lcd2, BLACK, " %s %d\nA>NEXT B>PREV\nC>BACK D>DONE\n", d[input[2] % 7], input[3]);
+		} else if (i == 2) {
+			LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  %02d:%02d ", input[0], input[1]);
+			LCD5110_printf(&lcd2, WHITE, "%s", d[input[2] % 7]);
+			LCD5110_printf(&lcd2, BLACK, " %d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[3]);
+		} else if (i == 3) {
+			LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  %02d:%02d %s ", input[0], input[1], d[input[2] % 7]);
+			LCD5110_printf(&lcd2, WHITE, "%d", input[3]);
+			LCD5110_printf(&lcd2, BLACK, "\nA>NEXT B>PREV\nC>BACK D>DONE\n");
+		}
+	}
+	else if (cmenu == timer_menu) {
+		if (i == 0) {
+			LCD5110_printf(&lcd2, BLACK, "--SET TIMER--\n     MM:SS\n     ");
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[0]);
+			LCD5110_printf(&lcd2, BLACK, ":%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[1]);
+		} else if (i == 1) {
+			LCD5110_printf(&lcd2, BLACK, "--SET TIMER--\n     MM:SS\n     %02d:", input[0]);
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[1]);
+			LCD5110_printf(&lcd2, BLACK, "\nA>NEXT B>PREV\nC>BACK D>DONE\n");
+		}
+	}
 	else if (cmenu == settings_menu)
 		LCD5110_printf(&lcd2, BLACK, "A > TIME\nB > LIGHTS\nC > PROBLEM\n     %s\nD > SAVE\n", diff[difficulty]);
-	else if (cmenu == time_menu)
-		LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+	else if (cmenu == time_menu) {
+		if (i == 0) {
+			LCD5110_printf(&lcd2, BLACK, "   ");
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[0]);
+			LCD5110_printf(&lcd2, BLACK, ":%02d:%02d\n %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+		} else if (i == 1) {
+			LCD5110_printf(&lcd2, BLACK, "   %02d:", input[0]);
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[1]);
+			LCD5110_printf(&lcd2, BLACK, ":%02d\n %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+		} else if (i == 2) {
+			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:", input[0], input[1]);
+			LCD5110_printf(&lcd2, WHITE, "%02d", input[2]);
+			LCD5110_printf(&lcd2, BLACK, "\n %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+		} else if (i == 3) {
+			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n ", input[0], input[1], input[2]);
+			LCD5110_printf(&lcd2, WHITE, "%s", days[input[3] % 7]);
+			LCD5110_printf(&lcd2, BLACK, "\n % 2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[4], mon[input[5] % 12], input[6]);
+		} else if (i == 4) {
+			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n ", input[0], input[1], input[2], days[input[3] % 7]);
+			LCD5110_printf(&lcd2, WHITE, "%2d", input[4]);
+			LCD5110_printf(&lcd2, BLACK, " %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", mon[input[5] % 12], input[6]);
+		} else if (i == 5) {
+			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n %2d ", input[0], input[1], input[2], days[input[3] % 7], input[4]);
+			LCD5110_printf(&lcd2, WHITE, "%s", mon[input[5] % 12]);
+			LCD5110_printf(&lcd2, BLACK, " 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[6]);
+		} else if (i == 6) {
+			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n %2d %s ", input[0], input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12]);
+			LCD5110_printf(&lcd2, WHITE, "20%02d", input[6]);
+			LCD5110_printf(&lcd2, BLACK, "\nA>NEXT B>PREV\nC>BACK D>DONE\n");
+		}
+	}
 	else if (cmenu == problem_menu) {
 		if (difficulty == 0) {
 			if (hint) LCD5110_printf(&lcd2, BLACK, "***CHEATER***\n%13d\n%13d\n*******%5d*\n%13d\n", num1, num2, enum1, unum1);
@@ -126,7 +181,10 @@ void on_number(int x)
 void on_choice(button x)
 {
 	if (cmenu == main_menu) {
-		if (x == button_a) cmenu = alarm_menu;
+		if (x == button_a) {
+			input[3] = 1;
+			cmenu = alarm_menu;
+		}
 		else if (x == button_b) cmenu = timer_menu;
 		else if (x == button_c) {
 			get_problem();
