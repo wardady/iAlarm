@@ -19,8 +19,13 @@ typedef enum {
 	time_menu,
 } menu;
 
+void on_timer();
+void on_alarm();
+void display1();
+void display2();
 void on_number(int x);
 void on_choice(button x);
+void done();
 int16_t complex(int16_t expected, int16_t input, int16_t x);
 
 #endif /* INTERFACE_H_ */

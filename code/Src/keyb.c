@@ -40,7 +40,7 @@ void keyboard_on_input(keyboard* board)
 {
 	uint32_t current_tick = HAL_GetTick();
 
-	if (current_tick - board->last_tick > 175) {
+	if (current_tick - board->last_tick > 333) {
 		int col_pin = -1;
 		int row_pin = -1;
 

@@ -24,13 +24,13 @@ void get_problem()
 void get_easy()
 {
 	num1 = rand() % 10000; num2 = rand() % 10000;
-	enum1 = num1 + num2;
+	enum1 = num1 + num2; enum2 = 0;
 }
 
 void get_medium()
 {
-	num1 = rand() % 100; num2 = rand() % 100;
-	enum1 = num1 * num2;
+	num1 = rand() % 1000; num2 = rand() % 100;
+	enum1 = num1 * num2; enum2 = 0;
 }
 
 void get_hard()

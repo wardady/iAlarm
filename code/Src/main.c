@@ -75,6 +75,7 @@
 
 /* USER CODE BEGIN PV */
 uint8_t aTxBuffer[18];
+uint8_t sec, min, hour, day, date, month, year, tim_sec, tim_min;
 uint8_t tim = 0, alrm = 0, i = 0, difficulty = 0, hash = 4, hint = 0;
 uint8_t input[7] = {0, 0, 0, 0, 0, 0, 0};
 int num1, num2, num3, num4, enum1, enum2, unum1, unum2;
@@ -82,13 +83,8 @@ menu cmenu = main_menu;
 keyboard board;
 LCD5110_display lcd1, lcd2;
 
-Queue xq = {{}, 0};
-Queue *q = &xq;
-
-const char *days[7] = {"    Monday", "   Tuesday", "  Wednesday", "  Thursday", "    Friday", "  Saturday", "    Sunday"};
-const char *d[7] = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
-const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-const char *diff[3] = {"EASY", "MEDIUM", "HARD"};
+queue xq = {{}, 0};
+queue* q = &xq;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,7 +109,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t sec, min, hour, day, date, month, year, tim_sec, tim_min;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -138,7 +134,7 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-  //first lcd5110 display init
+  	//first lcd5110 display init
   	lcd1.hw_conf.spi_handle = &hspi2;
   	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
   	lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
@@ -190,66 +186,16 @@ int main(void)
 	tim_min = toDEC(aTxBuffer[8]);
 
 	//timer activation
-	if (tim && (aTxBuffer[15] & 0b1)) {
-		reset_flag1();
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 0);
-		tim = 2;
-	}
+	on_timer();
 
 	//alarm activation
-	if (q->size && (aTxBuffer[15] & 0b10)) {
-		reset_flag2();
-		Alarm al = next(q);
-		set_alarm(al.min, al.hour, al.dotw);
-		alrm = 1;
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 0);
-		get_problem();
-		cmenu = problem_menu; hint = 0;
-	}
+	on_alarm();
 
 	//first display info
-	LCD5110_clear(&lcd1);
-	LCD5110_printf(&lcd1, BLACK, "---iAlarm---\n   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
-	if (tim == 0) LCD5110_print("TIMER   ", BLACK, &lcd1);
-	else if (tim == 1) {
-		uint8_t sec_left = tim_sec - sec, min_left = tim_min - min;
-		if (sec_left > 59) {
-			sec_left += 60;
-			min_left--;
-		}
-		if (min_left > 59) min_left += 60;
-		LCD5110_printf(&lcd1, BLACK, "%02d:%02d   ", min_left, sec_left);
-	} else if (tim == 2) {
-		LCD5110_print("TIMER", WHITE, &lcd1);
-		LCD5110_print("   ", BLACK, &lcd1);
-	}
-	if (q->size) LCD5110_print("ALARM\n", WHITE, &lcd1);
-	else LCD5110_print("ALARM\n", BLACK, &lcd1);
+	display1();
 
 	//second display info
-	LCD5110_clear(&lcd2);
-	if (cmenu == main_menu)
-		LCD5110_print("---iAlarm---\nA > ALARM\nB > TIMER\nC > PROBLEM\nD > SETTINGS\n", BLACK, &lcd2);
-	else if (cmenu == alarm_menu)
-		LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  %02d:%02d %s %d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1], d[input[2] % 7], input[3]);
-	else if (cmenu == timer_menu)
-		LCD5110_printf(&lcd2, BLACK, "--SET TIMER--\n     MM:SS\n     %02d:%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1]);
-	else if (cmenu == settings_menu)
-		LCD5110_printf(&lcd2, BLACK, "A > TIME\nB > LIGHTS\nC > PROBLEM\n     %s\nD > SAVE\n", diff[difficulty]);
-	else if (cmenu == time_menu)
-		LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n % 2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[0], input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
-	else if (cmenu == problem_menu) {
-		if (difficulty == 0) {
-			if (hint) LCD5110_printf(&lcd2, BLACK, "-----ADD-----\n%d\n%d\n%d\n%d\n", num1, num2, enum1, unum1);
-			else LCD5110_printf(&lcd2, BLACK, "-----ADD-----\n%d\n%d\n-------------\n%d\n", num1, num2, unum1);
-		} else if (difficulty == 1) {
-			if (hint) LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d\n%d\n%d\n%d\n", num1, num2, enum1, unum1);
-			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d\n%d\n-------------\n%d\n", num1, num2, unum1);
-		} else if (difficulty == 2) {
-			if (hint) LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d + %di\n%d + %di\n%d + %di\n%d + %di\n", num1, num2, num3, num4, enum1, enum2, unum1, unum2);
-			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY--\n%d + %di\n%d + %di\n-------------\n%d + %di\n", num1, num2, num3, num4, unum1, unum2);
-		}
-	}
+	display2();
 
 	HAL_Delay(100);
 
