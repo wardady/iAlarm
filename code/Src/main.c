@@ -163,7 +163,8 @@ int main(void)
 	keyboard_init(&board);
 
 	//reset system
-	reset_alarms();
+	reset_alarm();
+	reset_timer();
 
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 1);

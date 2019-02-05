@@ -24,7 +24,7 @@ extern LCD5110_display lcd1, lcd2;
 extern int num1, num2, num3, num4, enum1, enum2, unum1, unum2;
 extern queue* q;
 
-const char *days[7] = {"    Monday  ", "   Tuesday  ", "  Wednesday ", "  Thursday ", "    Friday  ", "  Saturday  ", "    Sunday  "};
+const char *days[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 const char *d[7] = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
 const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 const char *diff[3] = {"EASY", "MEDIUM", "HARD"};
@@ -54,7 +54,7 @@ void on_alarm()
 void display1()
 {
 	LCD5110_clear(&lcd1);
-	LCD5110_printf(&lcd1, BLACK, "---iAlarm----\n   %02d:%02d:%02d\n %s\n %2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
+	LCD5110_printf(&lcd1, BLACK, "---iAlarm----\n   %02d:%02d:%02d\n    %s\n %2d %s 20%02d\n", hour, min, sec, days[day-1 % 7], date, mon[month-1 % 12], year);
 	if (tim == 0) LCD5110_print("TIMER   ", BLACK, &lcd1);
 	else if (tim == 1) {
 		uint8_t sec_left = tim_sec - sec, min_left = tim_min - min;
@@ -76,7 +76,7 @@ void display2()
 {
 	LCD5110_clear(&lcd2);
 	if (cmenu == main_menu)
-		LCD5110_print("---iAlarm----\nA > ALARM\nB > TIMER\nC > PROBLEM\nD > SETTINGS\n", BLACK, &lcd2);
+		LCD5110_print("A > ALARM\nB > TIMER\nC > PROBLEM\nD > SETTINGS\n# > ALRM LIST", BLACK, &lcd2);
 	else if (cmenu == alarm_menu) {
 		if (i == 0) {
 			LCD5110_printf(&lcd2, BLACK, "--SET ALARM--\n  HH:MM DoW R\n  ");
@@ -111,31 +111,31 @@ void display2()
 		LCD5110_printf(&lcd2, BLACK, "A > TIME\nB > LIGHTS\nC > PROBLEM\n     %s\nD > SAVE\n", diff[difficulty]);
 	else if (cmenu == time_menu) {
 		if (i == 0) {
-			LCD5110_printf(&lcd2, BLACK, "   ");
+			LCD5110_printf(&lcd2, BLACK, "  ");
 			LCD5110_printf(&lcd2, WHITE, "%02d", input[0]);
-			LCD5110_printf(&lcd2, BLACK, ":%02d:%02d\n %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+			LCD5110_printf(&lcd2, BLACK, ":%02d:%02d\n    %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
 		} else if (i == 1) {
-			LCD5110_printf(&lcd2, BLACK, "   %02d:", input[0]);
+			LCD5110_printf(&lcd2, BLACK, "  %02d:", input[0]);
 			LCD5110_printf(&lcd2, WHITE, "%02d", input[1]);
-			LCD5110_printf(&lcd2, BLACK, ":%02d\n %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+			LCD5110_printf(&lcd2, BLACK, ":%02d\n    %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[2], days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
 		} else if (i == 2) {
-			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:", input[0], input[1]);
+			LCD5110_printf(&lcd2, BLACK, "  %02d:%02d:", input[0], input[1]);
 			LCD5110_printf(&lcd2, WHITE, "%02d", input[2]);
-			LCD5110_printf(&lcd2, BLACK, "\n %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
+			LCD5110_printf(&lcd2, BLACK, "\n    %s\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", days[input[3] % 7], input[4], mon[input[5] % 12], input[6]);
 		} else if (i == 3) {
-			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n ", input[0], input[1], input[2]);
+			LCD5110_printf(&lcd2, BLACK, "  %02d:%02d:%02d\n    ", input[0], input[1], input[2]);
 			LCD5110_printf(&lcd2, WHITE, "%s", days[input[3] % 7]);
-			LCD5110_printf(&lcd2, BLACK, "\n % 2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[4], mon[input[5] % 12], input[6]);
+			LCD5110_printf(&lcd2, BLACK, "\n %2d %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[4], mon[input[5] % 12], input[6]);
 		} else if (i == 4) {
-			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n ", input[0], input[1], input[2], days[input[3] % 7]);
+			LCD5110_printf(&lcd2, BLACK, "  %02d:%02d:%02d\n    %s\n ", input[0], input[1], input[2], days[input[3] % 7]);
 			LCD5110_printf(&lcd2, WHITE, "%2d", input[4]);
 			LCD5110_printf(&lcd2, BLACK, " %s 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", mon[input[5] % 12], input[6]);
 		} else if (i == 5) {
-			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n %2d ", input[0], input[1], input[2], days[input[3] % 7], input[4]);
+			LCD5110_printf(&lcd2, BLACK, "  %02d:%02d:%02d\n    %s\n %2d ", input[0], input[1], input[2], days[input[3] % 7], input[4]);
 			LCD5110_printf(&lcd2, WHITE, "%s", mon[input[5] % 12]);
 			LCD5110_printf(&lcd2, BLACK, " 20%02d\nA>NEXT B>PREV\nC>BACK D>DONE\n", input[6]);
 		} else if (i == 6) {
-			LCD5110_printf(&lcd2, BLACK, "   %02d:%02d:%02d\n %s\n %2d %s ", input[0], input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12]);
+			LCD5110_printf(&lcd2, BLACK, "  %02d:%02d:%02d\n    %s\n %2d %s ", input[0], input[1], input[2], days[input[3] % 7], input[4], mon[input[5] % 12]);
 			LCD5110_printf(&lcd2, WHITE, "20%02d", input[6]);
 			LCD5110_printf(&lcd2, BLACK, "\nA>NEXT B>PREV\nC>BACK D>DONE\n");
 		}
@@ -148,8 +148,23 @@ void display2()
 			if (hint) LCD5110_printf(&lcd2, BLACK, "***CHEATER***\n%13d\n%13d\n*******%5d*\n%13d\n", num1, num2, enum1, unum1);
 			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY---\n%13d\n%13d\n-------------\n%13d\n", num1, num2, unum1);
 		} else if (difficulty == 2) {
-			if (hint) LCD5110_printf(&lcd2, BLACK, "***CHEATER***\n%6d + %3di\n%6d + %3di\n %4d + %4di*\n %4d + %4di\n", num1, num2, num3, num4, enum1, enum2, unum1, unum2);
-			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY---\n%6d + %3di\n%6d + %3di\n-------------\n %4d + %4di\n", num1, num2, num3, num4, unum1, unum2);
+			if (hint) LCD5110_printf(&lcd2, BLACK, "***CHEATER***\n%6d + %3di\n%6d + %3di\n %4d + %4di*\n", num1, num2, num3, num4, enum1, enum2);
+			else LCD5110_printf(&lcd2, BLACK, "--MULTIPLY---\n%6d + %3di\n%6d + %3di\n-------------\n", num1, num2, num3, num4);
+			if (i == 0) {
+				LCD5110_printf(&lcd2, BLACK, " ");
+				LCD5110_printf(&lcd2, WHITE, "%4d", unum1);
+				LCD5110_printf(&lcd2, BLACK, " + %4di\n", unum2);
+			} else if (i == 1) {
+				LCD5110_printf(&lcd2, BLACK, " %4d + ", unum1);
+				LCD5110_printf(&lcd2, WHITE, "%4d", unum2);
+				LCD5110_printf(&lcd2, BLACK, "i\n");
+			}
+		}
+	}
+	else if (cmenu == queue_menu) {
+		if (!q->size) LCD5110_printf(&lcd2, BLACK, "\n     empty\n \nA>SET NEW\n#>DONE\n");
+		else {
+			LCD5110_printf(&lcd2, BLACK, "  ALARM %d/%d\n  %02d:%02d %s %d\nA>NEXT B>PREV\nC>DEL  D>CLR\n#>DONE\n", i+1, q->size, q->list[i].hour, q->list[i].min, d[q->list[i].dotw], q->list[i].repeat);
 		}
 	}
 }
@@ -191,6 +206,7 @@ void on_choice(button x)
 			cmenu = problem_menu;
 		}
 		else if (x == button_d) cmenu = settings_menu;
+		else if (x == button_hash) cmenu = queue_menu;
 	} else if (cmenu == alarm_menu) {
 		if (x == button_a) i = (i + 1) % 4;
 		else if (x == button_b) {
@@ -216,6 +232,7 @@ void on_choice(button x)
 		else if (x == button_d) {
 			if ((enum1 == unum1) && (enum2 == unum2)) {
 				done();
+				alrm = 0;
 				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
 			} else get_problem();
 		} else if (x == button_hash) {
@@ -238,6 +255,41 @@ void on_choice(button x)
 		} else if (x == button_c) done();
 		else if (x == button_d) {
 			set_time(input[2], input[1], input[0], input[3], input[4], input[5], input[6]);
+			done();
+		}
+	} else if (cmenu == queue_menu) {
+		if (x == button_a) {
+			if (!q->size) {
+				i = 0;
+				input[3] = 1;
+				cmenu = alarm_menu;
+			} else {
+				if (i < q->size - 1) i++;
+				else i = 0;
+			}
+		} else if (x == button_b) {
+			if (i > 0) i--;
+			else i = q->size - 1;
+		} else if (x == button_c) {
+			if (i == 0) {
+				if (q->size > 1) {
+					q->list[0].repeat = 0;
+					alarm al = next(q);
+					set_alarm(al.min, al.hour, al.dotw);
+				} else {
+					reset_alarm();
+					clear_queue(q);
+				}
+			} else {
+				for (uint8_t j = i; j < q->size - 1; j++)
+					q->list[j] = q->list[j + 1];
+				q->size--;
+				i--;
+			}
+		} else if (x == button_d) {
+			reset_alarm();
+			clear_queue(q);
+		} else if (x == button_hash) {
 			done();
 		}
 	}

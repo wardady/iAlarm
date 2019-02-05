@@ -17,6 +17,7 @@ typedef enum {
 	problem_menu,
 	settings_menu,
 	time_menu,
+	queue_menu
 } menu;
 
 void on_timer();

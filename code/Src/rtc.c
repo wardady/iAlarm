@@ -154,19 +154,36 @@ void reset_flag2()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
-void reset_alarms()
+void reset_alarm()
 {
 	get_buffer();
 
-	aTxBuffer[16] &= 0b11111100;
+	aTxBuffer[16] &= 0b11111101;
+
+	aTxBuffer[12] = 0;
+	aTxBuffer[13] = 0;
+	aTxBuffer[14] = 0;
+
+	for (uint8_t i = 11; i > 0; --i) {
+		aTxBuffer[i] = aTxBuffer[i-1];
+	}
+	aTxBuffer[0] = 0;
+
+	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 1);
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {}
+	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
+}
+
+void reset_timer()
+{
+	get_buffer();
+
+	aTxBuffer[16] &= 0b11111110;
 
 	aTxBuffer[8] = 0;
 	aTxBuffer[9] = 0;
 	aTxBuffer[10] = 0;
 	aTxBuffer[11] = 0;
-	aTxBuffer[12] = 0;
-	aTxBuffer[13] = 0;
-	aTxBuffer[14] = 0;
 
 	for (uint8_t i = 7; i > 0; --i) {
 		aTxBuffer[i] = aTxBuffer[i-1];
@@ -177,4 +194,3 @@ void reset_alarms()
 	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {}
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
-
