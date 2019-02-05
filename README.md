@@ -150,5 +150,5 @@ Speciality:
 Volodymyr Chernetskyi, Hermann Yavorskyi, Serhii Rosovskyi
 
 ## License and Copyright
-© Serhiy Rosovskyy, Volodymyr Chernetskyi, Hermann Yavorskyi, students of the Ukrainian Catholic University
+© Serhiy Rosovskyy, Volodymyr Chernetskyi, Hermann Yavorskyi, students of the Ukrainian Catholic University.
  
