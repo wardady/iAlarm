@@ -75,7 +75,7 @@ Speciality:
   (The time and date can be different), than you successfully connected the "iAlarm"
   
 ### Structure of the project
-.
+. <br>
 ├── CODE_OF_CONDUCT.md <br>
 ├── LICENSE <br>
 ├── README.md <br>
