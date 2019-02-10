@@ -8,7 +8,7 @@
 #ifndef KEYB_H_
 #define KEYB_H_
 
-// Buttons
+// buttons
 typedef enum {
   button_a,
   button_b,
@@ -28,7 +28,9 @@ typedef struct {
 	uint32_t last_tick;
 } keyboard;
 
+// initialize keyboard
 void keyboard_init(keyboard* board);
+// read input from keyboard
 void keyboard_on_input(keyboard* board);
 
 #endif /* KEYB_H_ */

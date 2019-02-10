@@ -74,15 +74,30 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+// ds3231 buffer
 uint8_t aTxBuffer[18];
+// time variables (tim == timer)
 uint8_t sec, min, hour, day, date, month, year, tim_sec, tim_min;
+/*
+ * tim, alrm - timer/alarm flags
+ * difficulty - problem difficulty
+ * hash - number of hashes left to press to get a hint
+ * hint - hint flag
+ * i - inputt index
+ */
 uint8_t tim = 0, alrm = 0, i = 0, difficulty = 0, hash = 4, hint = 0;
+// array that stores all the input
 uint8_t input[7] = {0, 0, 0, 0, 0, 0, 0};
+// problems related numbers
 int num1, num2, num3, num4, enum1, enum2, unum1, unum2;
+// cmenu - current menu
 menu cmenu = main_menu;
+// keyboard variable
 keyboard board;
+// display variable
 LCD5110_display lcd1, lcd2;
 
+// alarm queue initialization
 queue xq = {{}, 0};
 queue* q = &xq;
 /* USER CODE END PV */
@@ -90,6 +105,7 @@ queue* q = &xq;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+// in case of getting interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	//check what button was pressed
@@ -134,39 +150,42 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-  	//first lcd5110 display init
-  	lcd1.hw_conf.spi_handle = &hspi2;
-  	lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
-  	lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
-  	lcd1.hw_conf.rst_pin =  LCD1_RST_Pin;
-  	lcd1.hw_conf.rst_port = LCD1_RST_GPIO_Port;
-  	lcd1.hw_conf.dc_pin =  LCD1_DC_Pin;
-  	lcd1.hw_conf.dc_port = LCD1_DC_GPIO_Port;
-  	lcd1.def_scr = lcd5110_def_scr;
-  	LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
+  // first lcd5110 display init
+  lcd1.hw_conf.spi_handle = &hspi2;
+  lcd1.hw_conf.spi_cs_pin =  LCD1_CS_Pin;
+  lcd1.hw_conf.spi_cs_port = LCD1_CS_GPIO_Port;
+  lcd1.hw_conf.rst_pin =  LCD1_RST_Pin;
+  lcd1.hw_conf.rst_port = LCD1_RST_GPIO_Port;
+  lcd1.hw_conf.dc_pin =  LCD1_DC_Pin;
+  lcd1.hw_conf.dc_port = LCD1_DC_GPIO_Port;
+  lcd1.def_scr = lcd5110_def_scr;
+  LCD5110_init(&lcd1.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-  	//second lcd5110 display init
-  	lcd2.hw_conf.spi_handle = &hspi3;
-  	lcd2.hw_conf.spi_cs_pin =  LCD2_CS_Pin;
-  	lcd2.hw_conf.spi_cs_port = LCD2_CS_GPIO_Port;
-  	lcd2.hw_conf.rst_pin =  LCD2_RST_Pin;
-  	lcd2.hw_conf.rst_port = LCD2_RST_GPIO_Port;
-  	lcd2.hw_conf.dc_pin =  LCD2_DC_Pin;
-  	lcd2.hw_conf.dc_port = LCD2_DC_GPIO_Port;
-  	lcd2.def_scr = lcd5110_def_scr;
-  	LCD5110_init(&lcd2.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
+  // second lcd5110 display init
+  lcd2.hw_conf.spi_handle = &hspi3;
+  lcd2.hw_conf.spi_cs_pin =  LCD2_CS_Pin;
+  lcd2.hw_conf.spi_cs_port = LCD2_CS_GPIO_Port;
+  lcd2.hw_conf.rst_pin =  LCD2_RST_Pin;
+  lcd2.hw_conf.rst_port = LCD2_RST_GPIO_Port;
+  lcd2.hw_conf.dc_pin =  LCD2_DC_Pin;
+  lcd2.hw_conf.dc_port = LCD2_DC_GPIO_Port;
+  lcd2.def_scr = lcd5110_def_scr;
+  LCD5110_init(&lcd2.hw_conf, LCD5110_NORMAL_MODE, 0x40, 2, 3);
 
-  	uint16_t output_pins[] = {GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11};
+  // keyboard initialization
+  uint16_t output_pins[] = {GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11};
 	uint16_t input_pins[] = {GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3};
 	keyboard new_board = {GPIOD, GPIOD, input_pins, output_pins, *on_number, *on_choice};
 	board = new_board;
 	keyboard_init(&board);
 
-	//reset system
+	// reset system
 	reset_alarm();
 	reset_timer();
 
+  // turn off buzzer
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 1);
+  // turn on displays
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 1);
   /* USER CODE END 2 */
 
@@ -174,31 +193,33 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	get_buffer();
+    // get aTxBuffer
+    get_buffer();
 
-	sec = toDEC(aTxBuffer[0]);
-	min = toDEC(aTxBuffer[1]);
-	hour = toDEC(aTxBuffer[2]);
-	day = toDEC(aTxBuffer[3]);
-	date = toDEC(aTxBuffer[4]);
-	month = toDEC(aTxBuffer[5]);
-	year = toDEC(aTxBuffer[6]);
-	tim_sec = toDEC(aTxBuffer[7]);
-	tim_min = toDEC(aTxBuffer[8]);
+    // turn all BCD numbers into decimal
+    sec = toDEC(aTxBuffer[0]);
+    min = toDEC(aTxBuffer[1]);
+    hour = toDEC(aTxBuffer[2]);
+    day = toDEC(aTxBuffer[3]);
+    date = toDEC(aTxBuffer[4]);
+    month = toDEC(aTxBuffer[5]);
+    year = toDEC(aTxBuffer[6]);
+    tim_sec = toDEC(aTxBuffer[7]);
+    tim_min = toDEC(aTxBuffer[8]);
 
-	//timer activation
-	on_timer();
+    //timer activation handler
+    on_timer();
 
-	//alarm activation
-	on_alarm();
+    //alarm activation handler
+    on_alarm();
 
-	//first display info
-	display1();
+    //first display info
+    display1();
 
-	//second display info
-	display2();
+    //second display info
+    display2();
 
-	HAL_Delay(100);
+    HAL_Delay(100);
 
     /* USER CODE END WHILE */
 

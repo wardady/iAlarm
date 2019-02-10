@@ -131,6 +131,7 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+// write buffer, jump into busy loop in case of error
 void I2C_WriteBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff)
 {
 	while (HAL_I2C_Master_Transmit(&hi, (uint16_t) DEV_ADDR, (uint8_t*) &aTxBuffer, (uint16_t) sizebuff, (uint32_t) 1000) != HAL_OK) {
@@ -140,6 +141,7 @@ void I2C_WriteBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff)
 	}
 }
 
+// read buffer, jump into busy loop in case of error
 void I2C_ReadBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff)
 {
 	while (HAL_I2C_Master_Receive(&hi, (uint16_t) DEV_ADDR, (uint8_t*) &aTxBuffer, (uint16_t) sizebuff, (uint32_t) 1000) != HAL_OK) {

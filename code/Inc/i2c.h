@@ -59,7 +59,9 @@ extern I2C_HandleTypeDef hi2c1;
 void MX_I2C1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+// write buffer, jump into busy loop in case of error
 void I2C_WriteBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff);
+// read buffer, jump into busy loop in case of error
 void I2C_ReadBuffer(I2C_HandleTypeDef hi, uint8_t DEV_ADDR, uint8_t sizebuff);
 /* USER CODE END Prototypes */
 

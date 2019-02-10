@@ -9,16 +9,19 @@
 
 extern uint8_t aTxBuffer[18];
 
+// transform decimal into binary decimal
 uint8_t fromDEC(uint8_t dec)
 {
     return (dec / 10) << 4 | dec % 10;
 }
 
+// transform binary decimal into decimal
 uint8_t toDEC(uint8_t binar)
 {
     return ((binar >> 4) * 10) + (binar & 0xF);
 }
 
+// read aTxBuffer
 void get_buffer()
 {
 	aTxBuffer[0] = 0;
@@ -27,6 +30,7 @@ void get_buffer()
 	I2C_ReadBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
+// set time
 void set_time(uint8_t sec, uint8_t min, uint8_t hour, uint8_t day, uint8_t date, uint8_t month, uint8_t year)
 {
 	aTxBuffer[0] = 0;
@@ -43,6 +47,7 @@ void set_time(uint8_t sec, uint8_t min, uint8_t hour, uint8_t day, uint8_t date,
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 8);
 }
 
+// set alarm (alarm 2 on ds3231)
 void set_alarm(uint8_t min, uint8_t hour, uint8_t day)
 {
 	get_buffer();
@@ -61,6 +66,7 @@ void set_alarm(uint8_t min, uint8_t hour, uint8_t day)
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 15);
 }
 
+// set timer (alarm 1 on ds3231) as alarm with current + given time
 void set_timer(uint8_t sec, uint8_t min)
 {
 	get_buffer();
@@ -85,6 +91,7 @@ void set_timer(uint8_t sec, uint8_t min)
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 12);
 }
 
+// set alarm 1 to play every second
 void alarm1_every_second()
 {
 	get_buffer();
@@ -104,6 +111,7 @@ void alarm1_every_second()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 12);
 }
 
+// set alarm 2 to play every minute
 void alarm2_every_minute()
 {
 	get_buffer();
@@ -122,6 +130,7 @@ void alarm2_every_minute()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 15);
 }
 
+// reset alarm 1 flag
 void reset_flag1()
 {
 	get_buffer();
@@ -138,6 +147,7 @@ void reset_flag1()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
+// reset alarm 2 flag
 void reset_flag2()
 {
 	get_buffer();
@@ -154,6 +164,7 @@ void reset_flag2()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
+// reset alarm (alarm 2 on ds3231)
 void reset_alarm()
 {
 	get_buffer();
@@ -174,6 +185,7 @@ void reset_alarm()
 	I2C_WriteBuffer(hi2c1, (uint16_t) 0xD0, 18);
 }
 
+// reset timer (alarm 1 on ds3231)
 void reset_timer()
 {
 	get_buffer();
