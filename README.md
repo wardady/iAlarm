@@ -18,7 +18,7 @@
 Functions: 
   * Store time
   * Store alarms
-Realization:
+Implementation:
   * Library was written by ourselves(located in the "rtc.c" file);
   * Connected via I2C;
   * The back up battery can work for more than 30 years.
@@ -36,7 +36,7 @@ Information on the display:<br>
 **2nd display**:
   * Navigation
 
-Realization:
+Implementation:
   * Already written library by indrekis
   * Connected via SPI
   
@@ -47,7 +47,7 @@ Functions:
   * Repeats of the alarm
   * Set the time and date
 
-Realization:
+Implementation:
   * Works via interrupts
   
 #### Audio System
