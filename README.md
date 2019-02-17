@@ -24,6 +24,7 @@ Implementation:
   * The back up battery can work for more than 30 years.
 
 #### Display
+<img src="scheme/Interface.jpg" height=400, width=900>
 
 Information on the display:<br>
 **1st display**:
