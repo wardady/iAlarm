@@ -24,7 +24,6 @@ Implementation:
   * The back up battery can work for more than 30 years.
 
 #### Display
-<img src="scheme/Interface.jpg" height=400, width=900>
 
 Information on the display:<br>
 **1st display**:
@@ -72,7 +71,7 @@ Speciality:
 
 ### Checking
   If you see the following on your displays:<br>
-  <img src="scheme/interface.jpg" width=400, height=250><br>
+  <img src="scheme/Interface.jpg" width=400, height=250><br>
   (The time and date can be different), than you successfully connected the "iAlarm"
   
 ### Structure of the project
