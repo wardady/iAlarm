@@ -38,10 +38,11 @@
   ```bash
   $ git clone https://github.com/chernetskyi/iAlarm  
   ```
-  2. Connect the components in the following way: <img src="scheme.png" alt="connection scheme" width=600> Connect the STM32 microcontroller to your computer.
-  3. Open the project from the `code` folder in the System Workbench or Keil.
-  4. Build and run the project.
-  5. Enjoy! :tada:
+  2. Connect the components in the following way: <img src="scheme.png" alt="connection scheme" width=600>
+  3. Connect the STM32 microcontroller to your computer.
+  4. Open the project from the `code` folder in the System Workbench or Keil.
+  5. Build and run the project.
+  6. Enjoy! :tada:
 
 ### Usage 
 User interface is pretty intuitive: just follow the instructions on one of the displays. For detailed usage guide see [datasheet](iAlarmDataSheet.pdf).
@@ -62,4 +63,3 @@ See also the list of [contributors](https://github.com/chernetskyi/iAlarm/contri
 This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/).
 
 © 2019 Volodymyr Chernetskyi, Hermann Yavorskyi, Serhii Rosovskyi
- 
